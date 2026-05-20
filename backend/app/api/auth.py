@@ -8,6 +8,7 @@ from app.core.security import hash_password
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -15,9 +16,11 @@ def get_db():
     finally:
         db.close()
 
+
 @router.get("/")
 def auth_test():
     return {"message": "Auth route works"}
+
 
 @router.post("/register")
 def register(user: RegisterSchema, db: Session = Depends(get_db)):
@@ -26,8 +29,7 @@ def register(user: RegisterSchema, db: Session = Depends(get_db)):
     new_user = User(
         username=user.username,
         email=user.email,
-        password=hashed_pw,
-        role_id=user.role_id
+        password=hashed_pw
     )
 
     db.add(new_user)
