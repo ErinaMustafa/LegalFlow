@@ -7,6 +7,7 @@ from app.models.case import Case
 from app.models.task import Task
 from app.models.document import Document
 from app.models.contract import Contract
+from app.models.invoice import Invoice
 
 Base.metadata.create_all(bind=engine)
 

@@ -5,6 +5,8 @@ from app.api import auth, clients, cases, tasks, documents
 from app.api import roles
 from app.api import admin
 from app.api import contracts
+from app.api import invoices
+
 
 app = FastAPI(
     title="LegalFlow API",
@@ -32,3 +34,4 @@ app.include_router(documents.router)
 app.include_router(roles.router)
 app.include_router(admin.router)
 app.include_router(contracts.router)
+app.include_router(invoices.router)
