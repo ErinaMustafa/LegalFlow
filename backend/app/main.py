@@ -1,6 +1,6 @@
-from app.api import auth
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api import auth, clients
 
 app = FastAPI(
     title="LegalFlow API",
@@ -21,3 +21,4 @@ def root():
     return {"message": "LegalFlow API is running"}
 
 app.include_router(auth.router)
+app.include_router(clients.router)
