@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from app.db.database import Base
 
 class User(Base):
@@ -8,3 +8,4 @@ class User(Base):
     username = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
