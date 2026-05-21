@@ -8,6 +8,7 @@ from app.models.task import Task
 from app.models.document import Document
 from app.models.contract import Contract
 from app.models.invoice import Invoice
+from app.models.payment import Payment
 
 Base.metadata.create_all(bind=engine)
 
