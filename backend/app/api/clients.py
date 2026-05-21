@@ -37,3 +37,39 @@ def create_client(client: ClientCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=list[ClientResponse])
 def get_clients(db: Session = Depends(get_db)):
     return db.query(Client).all()
+
+@router.get("/{client_id}", response_model=ClientResponse)
+def get_client(client_id: int, db: Session = Depends(get_db)):
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        return {"message": "Client not found"}
+    return client
+
+
+@router.put("/{client_id}", response_model=ClientResponse)
+def update_client(client_id: int, updated_client: ClientCreate, db: Session = Depends(get_db)):
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        return {"message": "Client not found"}
+
+    client.full_name = updated_client.full_name
+    client.email = updated_client.email
+    client.phone = updated_client.phone
+    client.address = updated_client.address
+
+    db.commit()
+    db.refresh(client)
+
+    return client
+
+
+@router.delete("/{client_id}")
+def delete_client(client_id: int, db: Session = Depends(get_db)):
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        return {"message": "Client not found"}
+
+    db.delete(client)
+    db.commit()
+
+    return {"message": "Client deleted successfully"}
