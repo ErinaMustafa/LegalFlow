@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth, clients, cases, tasks, documents
+from app.api import roles
 
 app = FastAPI(
     title="LegalFlow API",
@@ -26,3 +27,4 @@ app.include_router(clients.router)
 app.include_router(cases.router)
 app.include_router(tasks.router)
 app.include_router(documents.router)
+app.include_router(roles.router)
