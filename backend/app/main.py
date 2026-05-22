@@ -13,6 +13,7 @@ from app.api import case_notes
 from app.api import notifications
 from app.api import comments
 from app.api import departments
+from app.api import document_categories
 
 
 app = FastAPI(
@@ -50,3 +51,5 @@ app.include_router(comments.router)
 app.include_router(calendar_events.router)
 app.include_router(departments.router)
 app.include_router(practice_areas.router)
+app.include_router(document_categories.router)
+

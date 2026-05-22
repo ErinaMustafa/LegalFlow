@@ -2,6 +2,7 @@ from app.db.database import Base, engine
 from app.models.calendar_event import CalendarEvent
 from app.models.department import Department
 from app.models.practice_area import PracticeArea
+from app.models.document_category import DocumentCategory
 
 from app.models.role import Role
 from app.models.user import User
