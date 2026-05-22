@@ -20,6 +20,7 @@ from app.models.comment import Comment
 from app.models.expense import Expense
 from app.models.time_entry import TimeEntry
 from app.models.reminder import Reminder
+from app.models.appointment import Appointment
 try:
     Base.metadata.create_all(bind=engine)
 
