@@ -21,6 +21,15 @@ from app.models.expense import Expense
 from app.models.time_entry import TimeEntry
 from app.models.reminder import Reminder
 from app.models.appointment import Appointment
+from app.models.ai_analysis import AIAnalysis
+
+
+
+
+
+
+
+
 try:
     Base.metadata.create_all(bind=engine)
 

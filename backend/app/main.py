@@ -19,6 +19,8 @@ from app.api import expenses
 from app.api import time_entries
 from app.api import reminders
 from app.api import appointments
+from app.api import ai_analyses
+
 
 app = FastAPI(
     title="LegalFlow API",
@@ -60,3 +62,4 @@ app.include_router(expenses.router)
 app.include_router(time_entries.router)
 app.include_router(reminders.router)
 app.include_router(appointments.router)
+app.include_router(ai_analyses.router)
