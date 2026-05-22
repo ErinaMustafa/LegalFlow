@@ -15,7 +15,7 @@ from app.api import comments
 from app.api import departments
 from app.api import practice_areas
 from app.api import document_categories
-
+from app.api import expenses
 
 app = FastAPI(
     title="LegalFlow API",
@@ -53,6 +53,6 @@ app.include_router(calendar_events.router)
 app.include_router(departments.router)
 app.include_router(practice_areas.router)
 app.include_router(document_categories.router)
-
+app.include_router(expenses.router)
 
 
