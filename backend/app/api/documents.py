@@ -21,7 +21,8 @@ def create_document(document: DocumentCreate, db: Session = Depends(get_db)):
         title=document.title,
         file_url=document.file_url,
         document_type=document.document_type,
-        case_id=document.case_id
+        case_id=document.case_id,
+        category_id=document.category_id
     )
 
     db.add(new_document)
@@ -60,6 +61,7 @@ def update_document(document_id: int, updated_document: DocumentCreate, db: Sess
     document.file_url = updated_document.file_url
     document.document_type = updated_document.document_type
     document.case_id = updated_document.case_id
+    document.category_id = updated_document.category_id
 
     db.commit()
     db.refresh(document)
