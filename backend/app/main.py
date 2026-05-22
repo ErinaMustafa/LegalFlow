@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import calendar_events
-
+from app.api import practice_areas
 from app.api import auth, clients, cases, tasks, documents
 from app.api import roles
 from app.api import admin
@@ -49,3 +49,4 @@ app.include_router(notifications.router)
 app.include_router(comments.router)
 app.include_router(calendar_events.router)
 app.include_router(departments.router)
+app.include_router(practice_areas.router)
