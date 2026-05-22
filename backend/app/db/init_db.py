@@ -22,6 +22,7 @@ from app.models.time_entry import TimeEntry
 from app.models.reminder import Reminder
 from app.models.appointment import Appointment
 from app.models.ai_analysis import AIAnalysis
+from app.models.audit_log import AuditLog
 
 
 

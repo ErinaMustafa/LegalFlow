@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import SessionLocal
 from app.models.case import Case
+from app.models.audit_log import AuditLog
 from app.schemas.case_schema import CaseCreate, CaseResponse
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
@@ -26,6 +27,18 @@ def create_case(case: CaseCreate, db: Session = Depends(get_db)):
     db.add(new_case)
     db.commit()
     db.refresh(new_case)
+
+    log = AuditLog(
+        action="CREATE",
+        entity_type="Case",
+        entity_id=new_case.id,
+        description="New case created",
+        user_id=1
+    )
+
+    db.add(log)
+    db.commit()
+
     return new_case
 
 @router.get("/", response_model=list[CaseResponse])
@@ -55,6 +68,18 @@ def update_case(case_id: int, updated_case: CaseCreate, db: Session = Depends(ge
 
     db.commit()
     db.refresh(case)
+
+    log = AuditLog(
+        action="UPDATE",
+        entity_type="Case",
+        entity_id=case.id,
+        description="Case updated",
+        user_id=1
+    )
+
+    db.add(log)
+    db.commit()
+
     return case
 
 @router.delete("/{case_id}")
@@ -63,6 +88,17 @@ def delete_case(case_id: int, db: Session = Depends(get_db)):
 
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+
+    log = AuditLog(
+        action="DELETE",
+        entity_type="Case",
+        entity_id=case.id,
+        description="Case deleted",
+        user_id=1
+    )
+
+    db.add(log)
+    db.commit()
 
     db.delete(case)
     db.commit()
