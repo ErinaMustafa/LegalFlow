@@ -8,6 +8,7 @@ from app.api import contracts
 from app.api import invoices
 from app.api import payments
 from app.api import hearings
+from app.api import case_notes
 
 
 app = FastAPI(
@@ -39,3 +40,4 @@ app.include_router(contracts.router)
 app.include_router(invoices.router)
 app.include_router(payments.router)
 app.include_router(hearings.router)
+app.include_router(case_notes.router)

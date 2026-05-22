@@ -10,6 +10,7 @@ from app.models.contract import Contract
 from app.models.invoice import Invoice
 from app.models.payment import Payment
 from app.models.hearing import Hearing
+from app.models.case_note import CaseNote
 
 
 try:
