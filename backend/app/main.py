@@ -17,6 +17,8 @@ from app.api import practice_areas
 from app.api import document_categories
 from app.api import expenses
 from app.api import time_entries
+from app.api import reminders
+
 app = FastAPI(
     title="LegalFlow API",
     description="Contract & Case Tracking System",
@@ -55,4 +57,4 @@ app.include_router(practice_areas.router)
 app.include_router(document_categories.router)
 app.include_router(expenses.router)
 app.include_router(time_entries.router)
-
+app.include_router(reminders.router)
