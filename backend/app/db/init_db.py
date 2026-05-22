@@ -15,7 +15,7 @@ from app.models.hearing import Hearing
 from app.models.case_note import CaseNote
 from app.models.notification import Notification
 from app.models.comment import Comment
-
+from app.models.expense import Expense
 try:
     Base.metadata.create_all(bind=engine)
 
