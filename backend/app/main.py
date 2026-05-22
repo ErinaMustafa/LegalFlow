@@ -22,6 +22,7 @@ from app.api import appointments
 from app.api import ai_analyses
 from app.api import audit_logs
 from app.api import witnesses
+from app.api import court_decisions
 
 
 app = FastAPI(
@@ -67,3 +68,4 @@ app.include_router(appointments.router)
 app.include_router(ai_analyses.router)
 app.include_router(audit_logs.router)
 app.include_router(witnesses.router)
+app.include_router(court_decisions.router)
