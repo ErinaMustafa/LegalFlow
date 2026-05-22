@@ -12,7 +12,7 @@ from app.models.payment import Payment
 from app.models.hearing import Hearing
 from app.models.case_note import CaseNote
 from app.models.notification import Notification
-
+from app.models.comment import Comment
 
 try:
     Base.metadata.create_all(bind=engine)
