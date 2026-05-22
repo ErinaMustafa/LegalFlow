@@ -1,4 +1,5 @@
 from app.db.database import Base, engine
+from app.models.calendar_event import CalendarEvent
 
 from app.models.role import Role
 from app.models.user import User
