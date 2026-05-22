@@ -9,7 +9,19 @@ from app.models.document import Document
 from app.models.contract import Contract
 from app.models.invoice import Invoice
 from app.models.payment import Payment
+from app.models.hearing import Hearing
 
-Base.metadata.create_all(bind=engine)
 
-print("Database tables created!")
+try:
+    Base.metadata.create_all(bind=engine)
+
+    print("===================================")
+    print("Database tables created successfully!")
+    print("===================================")
+
+except Exception as e:
+    print("===================================")
+    print("ERROR creating database tables!")
+    print("===================================")
+
+    print(str(e))
