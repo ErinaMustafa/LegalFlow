@@ -1,5 +1,5 @@
-
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from datetime import datetime
 from app.db.database import Base
 
 class Appointment(Base):
@@ -11,6 +11,7 @@ class Appointment(Base):
     appointment_date = Column(DateTime, nullable=False)
     location = Column(String, nullable=True)
     status = Column(String, default="Scheduled")
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     user_id = Column(Integer, ForeignKey("users.id"))
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=True)

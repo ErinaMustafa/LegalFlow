@@ -20,7 +20,6 @@ def create_invoice(invoice: InvoiceCreate, db: Session = Depends(get_db)):
         invoice_number=invoice.invoice_number,
         amount=invoice.amount,
         status=invoice.status,
-        issued_date=invoice.issued_date,
         due_date=invoice.due_date,
         client_id=invoice.client_id
     )

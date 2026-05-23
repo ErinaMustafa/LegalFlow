@@ -1,5 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
+
+from app.db.database import SessionLocal
+from app.models.audit_log import AuditLog
+
 from app.api import calendar_events
 from app.api import practice_areas
 from app.api import auth, clients, cases, tasks, documents
@@ -39,9 +44,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def audit_log_middleware(request: Request, call_next):
+    response = await call_next(request)
+
+    if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
+        if not request.url.path.startswith("/audit-logs"):
+            db = SessionLocal()
+            try:
+                log = AuditLog(
+                    action=request.method,
+                    entity_type=request.url.path,
+                    entity_id=None,
+                    description=f"{request.method} request to {request.url.path}",
+                    created_at=datetime.utcnow(),
+                    user_id=1
+                )
+
+                db.add(log)
+                db.commit()
+
+            finally:
+                db.close()
+
+    return response
+
+
 @app.get("/")
 def root():
     return {"message": "LegalFlow API is running"}
+
 
 app.include_router(auth.router)
 app.include_router(clients.router)

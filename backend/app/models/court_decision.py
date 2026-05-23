@@ -1,5 +1,5 @@
-
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from datetime import datetime
 from app.db.database import Base
 
 class CourtDecision(Base):
@@ -8,7 +8,7 @@ class CourtDecision(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     decision_text = Column(String, nullable=False)
-    decision_date = Column(DateTime, nullable=True)
+    decision_date = Column(DateTime, default=datetime.utcnow)
     status = Column(String, default="Issued")
 
     case_id = Column(Integer, ForeignKey("cases.id"))

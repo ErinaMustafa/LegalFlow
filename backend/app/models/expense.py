@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from datetime import datetime
 from app.db.database import Base
 
 class Expense(Base):
@@ -7,7 +8,7 @@ class Expense(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
-    expense_date = Column(DateTime, nullable=True)
+    expense_date = Column(DateTime, default=datetime.utcnow)
     description = Column(String, nullable=True)
 
     case_id = Column(Integer, ForeignKey("cases.id"))

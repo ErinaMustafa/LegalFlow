@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from datetime import datetime
 from app.db.database import Base
 
 class Invoice(Base):
@@ -8,6 +9,7 @@ class Invoice(Base):
     invoice_number = Column(String, unique=True, nullable=False)
     amount = Column(Float, nullable=False)
     status = Column(String, default="Unpaid")
-    issued_date = Column(String, nullable=True)
-    due_date = Column(String, nullable=True)
+    issued_date = Column(DateTime, default=datetime.utcnow)
+    due_date = Column(DateTime, nullable=True)
+
     client_id = Column(Integer, ForeignKey("clients.id"))

@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 class InvoiceCreate(BaseModel):
     invoice_number: str
     amount: float
-    status: str
-    issued_date: Optional[str] = None
-    due_date: Optional[str] = None
+    status: str = "Unpaid"
+    due_date: Optional[datetime] = None
     client_id: int
 
 class InvoiceResponse(BaseModel):
@@ -14,8 +14,8 @@ class InvoiceResponse(BaseModel):
     invoice_number: str
     amount: float
     status: str
-    issued_date: Optional[str] = None
-    due_date: Optional[str] = None
+    issued_date: Optional[datetime] = None
+    due_date: Optional[datetime] = None
     client_id: int
 
     class Config:

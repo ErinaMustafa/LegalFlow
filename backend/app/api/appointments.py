@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.db.database import SessionLocal
 from app.models.appointment import Appointment
@@ -16,12 +17,14 @@ def get_db():
 
 @router.post("/", response_model=AppointmentResponse)
 def create_appointment(appointment: AppointmentCreate, db: Session = Depends(get_db)):
+    status = "Completed" if appointment.appointment_date < datetime.utcnow() else "Scheduled"
+
     new_appointment = Appointment(
         title=appointment.title,
         description=appointment.description,
         appointment_date=appointment.appointment_date,
         location=appointment.location,
-        status=appointment.status,
+        status=status,
         user_id=appointment.user_id,
         client_id=appointment.client_id,
         case_id=appointment.case_id
@@ -30,6 +33,7 @@ def create_appointment(appointment: AppointmentCreate, db: Session = Depends(get
     db.add(new_appointment)
     db.commit()
     db.refresh(new_appointment)
+
     return new_appointment
 
 @router.get("/", response_model=list[AppointmentResponse])
@@ -56,13 +60,14 @@ def update_appointment(appointment_id: int, updated_appointment: AppointmentCrea
     appointment.description = updated_appointment.description
     appointment.appointment_date = updated_appointment.appointment_date
     appointment.location = updated_appointment.location
-    appointment.status = updated_appointment.status
+    appointment.status = "Completed" if updated_appointment.appointment_date < datetime.utcnow() else "Scheduled"
     appointment.user_id = updated_appointment.user_id
     appointment.client_id = updated_appointment.client_id
     appointment.case_id = updated_appointment.case_id
 
     db.commit()
     db.refresh(appointment)
+
     return appointment
 
 @router.delete("/{appointment_id}")
@@ -76,4 +81,3 @@ def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Appointment deleted successfully"}
-

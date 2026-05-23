@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.db.database import SessionLocal
 from app.models.case import Case
-from app.models.audit_log import AuditLog
 from app.schemas.case_schema import CaseCreate, CaseResponse
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
@@ -22,24 +22,15 @@ def create_case(case: CaseCreate, db: Session = Depends(get_db)):
         description=case.description,
         status=case.status,
         client_id=case.client_id,
-        practice_area_id=case.practice_area_id,
-        closed_at=case.closed_at
+        practice_area_id=case.practice_area_id
     )
+
+    if case.status == "Closed":
+        new_case.closed_at = datetime.utcnow()
 
     db.add(new_case)
     db.commit()
     db.refresh(new_case)
-
-    log = AuditLog(
-        action="CREATE",
-        entity_type="Case",
-        entity_id=new_case.id,
-        description="New case created",
-        user_id=1
-    )
-
-    db.add(log)
-    db.commit()
 
     return new_case
 
@@ -68,21 +59,14 @@ def update_case(case_id: int, updated_case: CaseCreate, db: Session = Depends(ge
     case.status = updated_case.status
     case.client_id = updated_case.client_id
     case.practice_area_id = updated_case.practice_area_id
-    case.closed_at = updated_case.closed_at
+
+    if updated_case.status == "Closed":
+        case.closed_at = datetime.utcnow()
+    else:
+        case.closed_at = None
 
     db.commit()
     db.refresh(case)
-
-    log = AuditLog(
-        action="UPDATE",
-        entity_type="Case",
-        entity_id=case.id,
-        description="Case updated",
-        user_id=1
-    )
-
-    db.add(log)
-    db.commit()
 
     return case
 
@@ -92,17 +76,6 @@ def delete_case(case_id: int, db: Session = Depends(get_db)):
 
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-
-    log = AuditLog(
-        action="DELETE",
-        entity_type="Case",
-        entity_id=case.id,
-        description="Case deleted",
-        user_id=1
-    )
-
-    db.add(log)
-    db.commit()
 
     db.delete(case)
     db.commit()
