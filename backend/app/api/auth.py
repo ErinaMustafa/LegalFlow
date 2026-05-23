@@ -51,7 +51,12 @@ def register(user: RegisterSchema, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return {"message": "User created successfully", "role": client_role.name}
+    return {
+        "message": "User created successfully",
+        "user_id": new_user.id,
+        "role": client_role.name,
+        "department_id": new_user.department_id
+    }
 
 
 @router.post("/login")
@@ -68,11 +73,17 @@ def login(user: LoginSchema, db: Session = Depends(get_db)):
 
     token = create_access_token({
         "sub": db_user.email,
-        "role": role.name if role else None
+        "user_id": db_user.id,
+        "role": role.name if role else None,
+        "department_id": db_user.department_id
     })
 
     return {
         "access_token": token,
         "token_type": "bearer",
-        "role": role.name if role else None
+        "user_id": db_user.id,
+        "username": db_user.username,
+        "email": db_user.email,
+        "role": role.name if role else None,
+        "department_id": db_user.department_id
     }

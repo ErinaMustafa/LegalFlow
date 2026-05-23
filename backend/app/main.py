@@ -1,9 +1,12 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
 from datetime import datetime
+from jose import jwt, JWTError
 
 from app.db.database import SessionLocal
 from app.models.audit_log import AuditLog
+from app.core.security import SECRET_KEY, ALGORITHM
 
 from app.api import calendar_events
 from app.api import practice_areas
@@ -30,10 +33,13 @@ from app.api import witnesses
 from app.api import court_decisions
 
 
+security = HTTPBearer(auto_error=False)
+
 app = FastAPI(
     title="LegalFlow API",
     description="Contract & Case Tracking System",
-    version="1.0.0"
+    version="1.0.0",
+    dependencies=[Depends(security)]
 )
 
 app.add_middleware(
@@ -51,6 +57,19 @@ async def audit_log_middleware(request: Request, call_next):
 
     if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
         if not request.url.path.startswith("/audit-logs"):
+            user_id = 1
+
+            auth_header = request.headers.get("Authorization")
+
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.replace("Bearer ", "")
+
+                try:
+                    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+                    user_id = payload.get("user_id", 1)
+                except JWTError:
+                    user_id = 1
+
             db = SessionLocal()
             try:
                 log = AuditLog(
@@ -59,7 +78,7 @@ async def audit_log_middleware(request: Request, call_next):
                     entity_id=None,
                     description=f"{request.method} request to {request.url.path}",
                     created_at=datetime.utcnow(),
-                    user_id=1
+                    user_id=user_id
                 )
 
                 db.add(log)
