@@ -18,11 +18,11 @@ def get_db():
 def create_document(document: DocumentCreate, db: Session = Depends(get_db)):
 
     new_document = Document(
-        title=document.title,
-        file_url=document.file_url,
-        document_type=document.document_type,
-        case_id=document.case_id,
-        category_id=document.category_id
+    title=document.title,
+    file_url=document.file_url,
+    document_type=document.document_type,
+    case_id=document.case_id,
+    category_id=document.category_id
     )
 
     db.add(new_document)

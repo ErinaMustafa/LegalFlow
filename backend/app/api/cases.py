@@ -21,7 +21,9 @@ def create_case(case: CaseCreate, db: Session = Depends(get_db)):
         title=case.title,
         description=case.description,
         status=case.status,
-        client_id=case.client_id
+        client_id=case.client_id,
+        practice_area_id=case.practice_area_id,
+        closed_at=case.closed_at
     )
 
     db.add(new_case)
@@ -65,6 +67,8 @@ def update_case(case_id: int, updated_case: CaseCreate, db: Session = Depends(ge
     case.description = updated_case.description
     case.status = updated_case.status
     case.client_id = updated_case.client_id
+    case.practice_area_id = updated_case.practice_area_id
+    case.closed_at = updated_case.closed_at
 
     db.commit()
     db.refresh(case)

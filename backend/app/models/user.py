@@ -8,4 +8,6 @@ class User(Base):
     username = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
+
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=True)
+    department_id = Column(Integer, ForeignKey("departments.id"), nullable=True)
