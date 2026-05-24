@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import case
+from typing import Optional
 
 from app.db.database import SessionLocal
 from app.models.client import Client
 from app.schemas.client_schema import ClientCreate, ClientResponse
 
-router = APIRouter(
-    prefix="/clients",
-    tags=["Clients"]
-)
+router = APIRouter(prefix="/clients", tags=["Clients"])
+
 
 def get_db():
     db = SessionLocal()
@@ -17,9 +17,67 @@ def get_db():
     finally:
         db.close()
 
+
+def smart_search(query, column, value):
+    if value:
+        if len(value) == 1:
+            return query.filter(column.ilike(f"{value}%"))
+
+        return query.filter(
+            column.ilike(f"%{value}%")
+        ).order_by(
+            case(
+                (column.ilike(value), 0),
+                (column.ilike(f"{value}%"), 1),
+                (column.ilike(f"% {value}%"), 2),
+                else_=3
+            )
+        )
+
+    return query
+
+
+@router.get("/", response_model=list[ClientResponse])
+def get_clients(
+    full_name: Optional[str] = Query(
+        None,
+        description="Smart search client full name"
+    ),
+
+    email: Optional[str] = Query(
+        None,
+        description="Smart search client email"
+    ),
+
+    phone: Optional[str] = Query(
+        None,
+        description="Search client phone number"
+    ),
+
+    address: Optional[str] = Query(
+        None,
+        description="Smart search client address"
+    ),
+
+    db: Session = Depends(get_db)
+):
+    query = db.query(Client)
+
+    query = smart_search(query, Client.full_name, full_name)
+    query = smart_search(query, Client.email, email)
+    query = smart_search(query, Client.address, address)
+
+    if phone:
+        query = query.filter(
+            Client.phone.ilike(f"%{phone}%")
+        )
+
+    return query.all()
+
+
 @router.post("/", response_model=ClientResponse)
 def create_client(client: ClientCreate, db: Session = Depends(get_db)):
-    
+
     new_client = Client(
         full_name=client.full_name,
         email=client.email,
@@ -34,23 +92,33 @@ def create_client(client: ClientCreate, db: Session = Depends(get_db)):
     return new_client
 
 
-@router.get("/", response_model=list[ClientResponse])
-def get_clients(db: Session = Depends(get_db)):
-    return db.query(Client).all()
-
 @router.get("/{client_id}", response_model=ClientResponse)
 def get_client(client_id: int, db: Session = Depends(get_db)):
+
     client = db.query(Client).filter(Client.id == client_id).first()
+
     if not client:
-        return {"message": "Client not found"}
+        raise HTTPException(
+            status_code=404,
+            detail="Client not found"
+        )
+
     return client
 
 
 @router.put("/{client_id}", response_model=ClientResponse)
-def update_client(client_id: int, updated_client: ClientCreate, db: Session = Depends(get_db)):
+def update_client(
+    client_id: int,
+    updated_client: ClientCreate,
+    db: Session = Depends(get_db)
+):
     client = db.query(Client).filter(Client.id == client_id).first()
+
     if not client:
-        return {"message": "Client not found"}
+        raise HTTPException(
+            status_code=404,
+            detail="Client not found"
+        )
 
     client.full_name = updated_client.full_name
     client.email = updated_client.email
@@ -65,11 +133,19 @@ def update_client(client_id: int, updated_client: ClientCreate, db: Session = De
 
 @router.delete("/{client_id}")
 def delete_client(client_id: int, db: Session = Depends(get_db)):
+
     client = db.query(Client).filter(Client.id == client_id).first()
+
     if not client:
-        return {"message": "Client not found"}
+        raise HTTPException(
+            status_code=404,
+            detail="Client not found"
+        )
 
     db.delete(client)
     db.commit()
 
-    return {"message": "Client deleted successfully"}
+    return {
+        "message": "Client deleted successfully"
+    }
+
