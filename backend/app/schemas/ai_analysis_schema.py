@@ -2,6 +2,9 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
+
+
+
 class AIAnalysisCreate(BaseModel):
     prompt: str
     result: str
@@ -10,6 +13,18 @@ class AIAnalysisCreate(BaseModel):
     user_id: int
     case_id: Optional[int] = None
     document_id: Optional[int] = None
+
+
+
+
+class AIAnalyzeTextRequest(BaseModel):
+    prompt: str
+    analysis_type: Optional[str] = "text_analysis"
+    case_id: Optional[int] = None
+    document_id: Optional[int] = None
+
+
+
 
 class AIAnalysisResponse(BaseModel):
     id: int
@@ -21,6 +36,6 @@ class AIAnalysisResponse(BaseModel):
     case_id: Optional[int] = None
     document_id: Optional[int] = None
 
+
     class Config:
         from_attributes = True
-
