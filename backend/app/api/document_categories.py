@@ -1,11 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import case
+from typing import Optional
 
 from app.db.database import SessionLocal
 from app.models.document_category import DocumentCategory
-from app.schemas.document_category_schema import DocumentCategoryCreate, DocumentCategoryResponse
+from app.schemas.document_category_schema import (
+    DocumentCategoryCreate,
+    DocumentCategoryResponse
+)
 
-router = APIRouter(prefix="/document-categories", tags=["Document Categories"])
+router = APIRouter(
+    prefix="/document-categories",
+    tags=["Document Categories"]
+)
+
 
 def get_db():
     db = SessionLocal()
@@ -14,8 +23,31 @@ def get_db():
     finally:
         db.close()
 
+
+def smart_search(query, column, value):
+    if value:
+        if len(value) == 1:
+            return query.filter(column.ilike(f"{value}%"))
+
+        return query.filter(
+            column.ilike(f"%{value}%")
+        ).order_by(
+            case(
+                (column.ilike(value), 0),
+                (column.ilike(f"{value}%"), 1),
+                (column.ilike(f"% {value}%"), 2),
+                else_=3
+            )
+        )
+
+    return query
+
+
 @router.post("/", response_model=DocumentCategoryResponse)
-def create_document_category(category: DocumentCategoryCreate, db: Session = Depends(get_db)):
+def create_document_category(
+    category: DocumentCategoryCreate,
+    db: Session = Depends(get_db)
+):
     new_category = DocumentCategory(
         name=category.name,
         description=category.description
@@ -24,41 +56,85 @@ def create_document_category(category: DocumentCategoryCreate, db: Session = Dep
     db.add(new_category)
     db.commit()
     db.refresh(new_category)
+
     return new_category
 
+
 @router.get("/", response_model=list[DocumentCategoryResponse])
-def get_document_categories(db: Session = Depends(get_db)):
-    return db.query(DocumentCategory).all()
+def get_document_categories(
+    name: Optional[str] = Query(
+        None,
+        description="Smart search category names"
+    ),
+
+    description: Optional[str] = Query(
+        None,
+        description="Smart search category descriptions"
+    ),
+
+    db: Session = Depends(get_db)
+):
+    query = db.query(DocumentCategory)
+
+    query = smart_search(query, DocumentCategory.name, name)
+    query = smart_search(query, DocumentCategory.description, description)
+
+    return query.all()
+
 
 @router.get("/{category_id}", response_model=DocumentCategoryResponse)
 def get_document_category(category_id: int, db: Session = Depends(get_db)):
-    category = db.query(DocumentCategory).filter(DocumentCategory.id == category_id).first()
+
+    category = db.query(DocumentCategory).filter(
+        DocumentCategory.id == category_id
+    ).first()
 
     if not category:
-        raise HTTPException(status_code=404, detail="Document category not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Document category not found"
+        )
 
     return category
 
+
 @router.put("/{category_id}", response_model=DocumentCategoryResponse)
-def update_document_category(category_id: int, updated_category: DocumentCategoryCreate, db: Session = Depends(get_db)):
-    category = db.query(DocumentCategory).filter(DocumentCategory.id == category_id).first()
+def update_document_category(
+    category_id: int,
+    updated_category: DocumentCategoryCreate,
+    db: Session = Depends(get_db)
+):
+    category = db.query(DocumentCategory).filter(
+        DocumentCategory.id == category_id
+    ).first()
 
     if not category:
-        raise HTTPException(status_code=404, detail="Document category not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Document category not found"
+        )
 
     category.name = updated_category.name
     category.description = updated_category.description
 
     db.commit()
     db.refresh(category)
+
     return category
+
 
 @router.delete("/{category_id}")
 def delete_document_category(category_id: int, db: Session = Depends(get_db)):
-    category = db.query(DocumentCategory).filter(DocumentCategory.id == category_id).first()
+
+    category = db.query(DocumentCategory).filter(
+        DocumentCategory.id == category_id
+    ).first()
 
     if not category:
-        raise HTTPException(status_code=404, detail="Document category not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Document category not found"
+        )
 
     db.delete(category)
     db.commit()
