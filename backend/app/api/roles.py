@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import case
+from typing import Optional
 
 from app.db.database import SessionLocal
 from app.models.role import Role
@@ -10,12 +12,33 @@ router = APIRouter(
     tags=["Roles"]
 )
 
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+
+def smart_search(query, column, value):
+    if value:
+        if len(value) == 1:
+            return query.filter(column.ilike(f"{value}%"))
+
+        return query.filter(
+            column.ilike(f"%{value}%")
+        ).order_by(
+            case(
+                (column.ilike(value), 0),
+                (column.ilike(f"{value}%"), 1),
+                (column.ilike(f"% {value}%"), 2),
+                else_=3
+            )
+        )
+
+    return query
+
 
 @router.post("/", response_model=RoleResponse)
 def create_role(role: RoleCreate, db: Session = Depends(get_db)):
@@ -32,11 +55,19 @@ def create_role(role: RoleCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[RoleResponse])
-def get_roles(db: Session = Depends(get_db)):
+def get_roles(
+    name: Optional[str] = Query(
+        None,
+        description="Smart search role names"
+    ),
 
-    roles = db.query(Role).all()
+    db: Session = Depends(get_db)
+):
+    query = db.query(Role)
 
-    return roles
+    query = smart_search(query, Role.name, name)
+
+    return query.all()
 
 
 @router.get("/{role_id}", response_model=RoleResponse)
