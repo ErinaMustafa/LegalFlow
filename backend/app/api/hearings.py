@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from datetime import datetime
+from sqlalchemy import case
+from datetime import datetime, timedelta
+from typing import Optional
 
 from app.db.database import SessionLocal
 from app.models.hearing import Hearing
@@ -8,12 +10,75 @@ from app.schemas.hearing_schema import HearingCreate, HearingResponse
 
 router = APIRouter(prefix="/hearings", tags=["Hearings"])
 
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+
+def smart_search(query, column, value):
+    if value:
+        if len(value) == 1:
+            return query.filter(column.ilike(f"{value}%"))
+
+        return query.filter(
+            column.ilike(f"%{value}%")
+        ).order_by(
+            case(
+                (column.ilike(value), 0),
+                (column.ilike(f"{value}%"), 1),
+                (column.ilike(f"% {value}%"), 2),
+                else_=3
+            )
+        )
+
+    return query
+
+
+def date_search(query, column, value):
+    if value:
+        try:
+            if len(value) == 4:
+                start = datetime.strptime(value, "%Y")
+                end = datetime(start.year + 1, 1, 1)
+
+            elif len(value) == 7:
+                start = datetime.strptime(value, "%Y-%m")
+
+                if start.month == 12:
+                    end = datetime(start.year + 1, 1, 1)
+                else:
+                    end = datetime(start.year, start.month + 1, 1)
+
+            elif len(value) == 10:
+                start = datetime.strptime(value, "%Y-%m-%d")
+                end = start + timedelta(days=1)
+
+            elif len(value) == 13:
+                start = datetime.strptime(value, "%Y-%m-%dT%H")
+                end = start + timedelta(hours=1)
+
+            elif len(value) == 16:
+                start = datetime.strptime(value, "%Y-%m-%dT%H:%M")
+                end = start + timedelta(minutes=1)
+
+            else:
+                start = datetime.fromisoformat(value)
+                end = start + timedelta(seconds=1)
+
+            return query.filter(column >= start, column < end)
+
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid date format. Use YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, or YYYY-MM-DDTHH:MM"
+            )
+
+    return query
+
 
 @router.post("/", response_model=HearingResponse)
 def create_hearing(hearing: HearingCreate, db: Session = Depends(get_db)):
@@ -33,9 +98,29 @@ def create_hearing(hearing: HearingCreate, db: Session = Depends(get_db)):
 
     return new_hearing
 
+
 @router.get("/", response_model=list[HearingResponse])
-def get_hearings(db: Session = Depends(get_db)):
-    return db.query(Hearing).all()
+def get_hearings(
+    title: Optional[str] = Query(None, description="Smart search hearing titles"),
+    court_name: Optional[str] = Query(None, description="Smart search court names"),
+    status: Optional[str] = Query(None, description="Smart search hearing status"),
+    case_id: Optional[int] = Query(None, description="Filter by case ID"),
+    hearing_date: Optional[str] = Query(None, description="Filter by hearing date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Hearing)
+
+    query = smart_search(query, Hearing.title, title)
+    query = smart_search(query, Hearing.court_name, court_name)
+    query = smart_search(query, Hearing.status, status)
+
+    if case_id is not None:
+        query = query.filter(Hearing.case_id == case_id)
+
+    query = date_search(query, Hearing.hearing_date, hearing_date)
+
+    return query.all()
+
 
 @router.get("/{hearing_id}", response_model=HearingResponse)
 def get_hearing(hearing_id: int, db: Session = Depends(get_db)):
@@ -45,6 +130,7 @@ def get_hearing(hearing_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Hearing not found")
 
     return hearing
+
 
 @router.put("/{hearing_id}", response_model=HearingResponse)
 def update_hearing(hearing_id: int, updated_hearing: HearingCreate, db: Session = Depends(get_db)):
@@ -63,6 +149,7 @@ def update_hearing(hearing_id: int, updated_hearing: HearingCreate, db: Session 
     db.refresh(hearing)
 
     return hearing
+
 
 @router.delete("/{hearing_id}")
 def delete_hearing(hearing_id: int, db: Session = Depends(get_db)):
