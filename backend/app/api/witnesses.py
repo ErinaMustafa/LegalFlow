@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.witness import Witness
 from app.schemas.witness_schema import (
@@ -72,7 +72,10 @@ def get_witnesses(
     phone: Optional[str] = Query(None, description="Search witness phone number"),
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     hearing_id: Optional[int] = Query(None, description="Filter by hearing ID"),
-    db: Session = Depends(get_db)
+   db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     cache_key = (
         f"witnesses:"
@@ -147,7 +150,8 @@ def get_witnesses(
 @router.post("/", response_model=WitnessResponse)
 def create_witness(
     witness: WitnessCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     new_witness = Witness(
         full_name=witness.full_name,
@@ -175,7 +179,10 @@ def create_witness(
 @router.get("/{witness_id}", response_model=WitnessResponse)
 def get_witness(
     witness_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     cache_key = f"witnesses:id={witness_id}"
 
@@ -226,7 +233,8 @@ def get_witness(
 def update_witness(
     witness_id: int,
     updated_witness: WitnessCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     witness = db.query(Witness).filter(
         Witness.id == witness_id
@@ -263,7 +271,8 @@ def update_witness(
 @router.delete("/{witness_id}")
 def delete_witness(
     witness_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     witness = db.query(Witness).filter(
         Witness.id == witness_id

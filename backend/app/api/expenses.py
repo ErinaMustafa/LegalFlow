@@ -4,7 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.expense import Expense
 from app.schemas.expense_schema import ExpenseCreate, ExpenseResponse
@@ -127,7 +127,8 @@ def get_expenses(
     client_id: Optional[int] = Query(None, description="Filter by client ID"),
 
 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
 ):
     cache_key = (
         f"expenses:"
@@ -210,7 +211,11 @@ def get_expenses(
 
 
 @router.post("/", response_model=ExpenseResponse)
-def create_expense(expense: ExpenseCreate, db: Session = Depends(get_db)):
+def create_expense(
+    expense: ExpenseCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     new_expense = Expense(
         title=expense.title,
         amount=expense.amount,
@@ -235,7 +240,11 @@ def create_expense(expense: ExpenseCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{expense_id}", response_model=ExpenseResponse)
-def get_expense(expense_id: int, db: Session = Depends(get_db)):
+def get_expense(
+    expense_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     cache_key = f"expenses:id={expense_id}"
 
 
@@ -277,7 +286,12 @@ def get_expense(expense_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{expense_id}", response_model=ExpenseResponse)
-def update_expense(expense_id: int, updated_expense: ExpenseCreate, db: Session = Depends(get_db)):
+def update_expense(
+    expense_id: int,
+    updated_expense: ExpenseCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     expense = db.query(Expense).filter(Expense.id == expense_id).first()
 
 
@@ -306,7 +320,11 @@ def update_expense(expense_id: int, updated_expense: ExpenseCreate, db: Session 
 
 
 @router.delete("/{expense_id}")
-def delete_expense(expense_id: int, db: Session = Depends(get_db)):
+def delete_expense(
+    expense_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     expense = db.query(Expense).filter(Expense.id == expense_id).first()
 
 

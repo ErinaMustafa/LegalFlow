@@ -4,7 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.calendar_event import CalendarEvent
 from app.schemas.calendar_event_schema import CalendarEventCreate, CalendarEventResponse
@@ -119,7 +119,10 @@ def get_calendar_events(
     created_at: Optional[str] = Query(None, description="Filter by created date"),
     user_id: Optional[int] = Query(None, description="Filter by user ID"),
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+)
 ):
     cache_key = (
         f"calendar_events:"
@@ -190,7 +193,13 @@ def get_calendar_events(
 
 
 @router.post("/", response_model=CalendarEventResponse)
-def create_calendar_event(event: CalendarEventCreate, db: Session = Depends(get_db)):
+def create_calendar_event(
+    event: CalendarEventCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     if event.end_date:
         status = "Completed" if event.end_date < get_current_datetime_for_compare(event.end_date) else "Scheduled"
     else:
@@ -222,7 +231,13 @@ def create_calendar_event(event: CalendarEventCreate, db: Session = Depends(get_
 
 
 @router.get("/{event_id}", response_model=CalendarEventResponse)
-def get_calendar_event(event_id: int, db: Session = Depends(get_db)):
+def get_calendar_event(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     cache_key = f"calendar_events:id={event_id}"
 
 
@@ -266,7 +281,14 @@ def get_calendar_event(event_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{event_id}", response_model=CalendarEventResponse)
-def update_calendar_event(event_id: int, updated_event: CalendarEventCreate, db: Session = Depends(get_db)):
+def update_calendar_event(
+    event_id: int,
+    updated_event: CalendarEventCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     event = db.query(CalendarEvent).filter(CalendarEvent.id == event_id).first()
 
 
@@ -301,7 +323,13 @@ def update_calendar_event(event_id: int, updated_event: CalendarEventCreate, db:
 
 
 @router.delete("/{event_id}")
-def delete_calendar_event(event_id: int, db: Session = Depends(get_db)):
+def delete_calendar_event(
+    event_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     event = db.query(CalendarEvent).filter(CalendarEvent.id == event_id).first()
 
 

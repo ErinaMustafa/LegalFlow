@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.document_category import DocumentCategory
 from app.schemas.document_category_schema import DocumentCategoryCreate, DocumentCategoryResponse
@@ -49,7 +49,11 @@ def smart_search(query, column, value):
 
 
 @router.post("/", response_model=DocumentCategoryResponse)
-def create_document_category(category: DocumentCategoryCreate, db: Session = Depends(get_db)):
+def create_document_category(
+    category: DocumentCategoryCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     new_category = DocumentCategory(
         name=category.name,
         description=category.description
@@ -73,7 +77,10 @@ def create_document_category(category: DocumentCategoryCreate, db: Session = Dep
 def get_document_categories(
     name: Optional[str] = Query(None, description="Smart search category names"),
     description: Optional[str] = Query(None, description="Smart search category descriptions"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+)
 ):
     cache_key = f"document_categories:name={name}:description={description}"
 
@@ -119,7 +126,13 @@ def get_document_categories(
 
 
 @router.get("/{category_id}", response_model=DocumentCategoryResponse)
-def get_document_category(category_id: int, db: Session = Depends(get_db)):
+def get_document_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     cache_key = f"document_categories:id={category_id}"
 
 
@@ -157,7 +170,12 @@ def get_document_category(category_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{category_id}", response_model=DocumentCategoryResponse)
-def update_document_category(category_id: int, updated_category: DocumentCategoryCreate, db: Session = Depends(get_db)):
+def update_document_category(
+    category_id: int,
+    updated_category: DocumentCategoryCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     category = db.query(DocumentCategory).filter(DocumentCategory.id == category_id).first()
 
 
@@ -182,7 +200,11 @@ def update_document_category(category_id: int, updated_category: DocumentCategor
 
 
 @router.delete("/{category_id}")
-def delete_document_category(category_id: int, db: Session = Depends(get_db)):
+def delete_document_category(
+    category_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     category = db.query(DocumentCategory).filter(DocumentCategory.id == category_id).first()
 
 

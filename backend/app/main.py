@@ -1,12 +1,12 @@
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer
 from datetime import datetime
 from jose import jwt, JWTError
 
 from app.db.database import SessionLocal
 from app.models.audit_log import AuditLog
 from app.core.security import SECRET_KEY, ALGORITHM
+
 
 from app.api import calendar_events
 from app.api import practice_areas
@@ -33,13 +33,12 @@ from app.api import witnesses
 from app.api import court_decisions
 
 
-security = HTTPBearer(auto_error=False)
+
 
 app = FastAPI(
     title="LegalFlow API",
     description="Contract & Case Tracking System",
-    version="1.0.0",
-    dependencies=[Depends(security)]
+    version="1.0.0"
 )
 
 app.add_middleware(

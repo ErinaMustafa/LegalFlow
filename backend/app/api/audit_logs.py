@@ -4,7 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.audit_log import AuditLog
 from app.schemas.audit_log_schema import (
@@ -152,7 +152,8 @@ def get_audit_logs(
     ),
 
 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Manager"))
 ):
     cache_key = (
         f"audit_logs:"
@@ -228,7 +229,8 @@ def get_audit_logs(
 @router.post("/", response_model=AuditLogResponse)
 def create_audit_log(
     audit_log: AuditLogCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
 ):
     new_log = AuditLog(
         action=audit_log.action,
@@ -256,7 +258,8 @@ def create_audit_log(
 @router.get("/{log_id}", response_model=AuditLogResponse)
 def get_audit_log(
     log_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Manager"))
 ):
     cache_key = f"audit_logs:id={log_id}"
 
@@ -306,7 +309,8 @@ def get_audit_log(
 @router.delete("/{log_id}")
 def delete_audit_log(
     log_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
 ):
     log = db.query(AuditLog).filter(
         AuditLog.id == log_id

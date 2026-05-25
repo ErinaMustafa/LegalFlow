@@ -30,6 +30,7 @@ from app.background.tasks import (
     process_ai_analysis_background
 )
 
+from app.core.security import require_roles
 
 router = APIRouter(
     prefix="/ai-analyses",
@@ -126,7 +127,8 @@ def get_ai_analyses(
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     document_id: Optional[int] = Query(None, description="Filter by document ID"),
 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     cache_key = (
         f"ai_analyses:"
@@ -189,7 +191,8 @@ def get_ai_analyses(
 def analyze_text(
     request: AIAnalyzeTextRequest,
     authorization: str = Header(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     api_key = os.getenv("OPENROUTER_API_KEY")
 
@@ -273,36 +276,19 @@ def analyze_text(
 def analyze_text_background(
     request: AIAnalyzeTextRequest,
     background_tasks: BackgroundTasks,
-    authorization: str = Header(None)
+    authorization: str = Header(None),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer")
+    )
 ):
-    if not authorization:
-        raise HTTPException(
-            status_code=401,
-            detail="Authorization token missing"
-        )
-
-    try:
-        token = authorization.replace("Bearer ", "")
-
-        payload = jwt.decode(
-            token,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
-
-        current_user_id = payload.get("user_id")
-
-    except JWTError:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid token"
-        )
+   
+   
 
     background_tasks.add_task(
         process_ai_analysis_background,
         request.prompt,
         request.analysis_type,
-        current_user_id,
+        current_user["user_id"],
         request.case_id,
         request.document_id
     )
@@ -316,7 +302,8 @@ def analyze_text_background(
 @router.post("/", response_model=AIAnalysisResponse)
 def create_ai_analysis(
     analysis: AIAnalysisCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     new_analysis = AIAnalysis(
         prompt=analysis.prompt,
@@ -340,7 +327,8 @@ def create_ai_analysis(
 @router.get("/{analysis_id}", response_model=AIAnalysisResponse)
 def get_ai_analysis(
     analysis_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     cache_key = f"ai_analyses:id={analysis_id}"
 
@@ -382,7 +370,8 @@ def get_ai_analysis(
 def update_ai_analysis(
     analysis_id: int,
     updated_analysis: AIAnalysisCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     analysis = db.query(AIAnalysis).filter(
         AIAnalysis.id == analysis_id
@@ -413,7 +402,8 @@ def update_ai_analysis(
 @router.delete("/{analysis_id}")
 def delete_ai_analysis(
     analysis_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     analysis = db.query(AIAnalysis).filter(
         AIAnalysis.id == analysis_id

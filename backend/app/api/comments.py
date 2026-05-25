@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
-
+from app.core.security import require_roles
 
 from app.db.database import SessionLocal
 from app.models.comment import Comment
@@ -113,7 +113,10 @@ def get_comments(
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     task_id: Optional[int] = Query(None, description="Filter by task ID"),
     created_at: Optional[str] = Query(None, description="Filter by created date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+)
 ):
     cache_key = (
         f"comments:"
@@ -183,7 +186,13 @@ def get_comments(
 
 
 @router.post("/", response_model=CommentResponse)
-def create_comment(comment: CommentCreate, db: Session = Depends(get_db)):
+def create_comment(
+    comment: CommentCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     new_comment = Comment(
         content=comment.content,
         created_at=comment.created_at,
@@ -207,7 +216,13 @@ def create_comment(comment: CommentCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{comment_id}", response_model=CommentResponse)
-def get_comment(comment_id: int, db: Session = Depends(get_db)):
+def get_comment(
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     cache_key = f"comments:id={comment_id}"
 
 
@@ -248,7 +263,14 @@ def get_comment(comment_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{comment_id}", response_model=CommentResponse)
-def update_comment(comment_id: int, updated_comment: CommentCreate, db: Session = Depends(get_db)):
+def update_comment(
+    comment_id: int,
+    updated_comment: CommentCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     comment = db.query(Comment).filter(Comment.id == comment_id).first()
 
 
@@ -276,7 +298,13 @@ def update_comment(comment_id: int, updated_comment: CommentCreate, db: Session 
 
 
 @router.delete("/{comment_id}")
-def delete_comment(comment_id: int, db: Session = Depends(get_db)):
+def delete_comment(
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     comment = db.query(Comment).filter(Comment.id == comment_id).first()
 
 

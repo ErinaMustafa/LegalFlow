@@ -4,7 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
-
+from app.core.security import require_roles
 
 from app.db.database import SessionLocal
 from app.models.contract import Contract
@@ -134,7 +134,10 @@ def get_contracts(
     start_date: Optional[str] = Query(None, description="Filter by start date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
     end_date: Optional[str] = Query(None, description="Filter by end date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant", "Finance")
+    )
 ):
     cache_key = (
         f"contracts:"
@@ -204,7 +207,8 @@ def get_contracts(
 def create_contract(
     contract: ContractCreate,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     new_contract = Contract(
         title=contract.title,
@@ -241,7 +245,13 @@ def create_contract(
 
 
 @router.get("/{contract_id}", response_model=ContractResponse)
-def get_contract(contract_id: int, db: Session = Depends(get_db)):
+def get_contract(
+    contract_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant", "Finance")
+    )
+):
     cache_key = f"contracts:id={contract_id}"
 
 
@@ -283,7 +293,14 @@ def get_contract(contract_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{contract_id}", response_model=ContractResponse)
-def update_contract(contract_id: int, updated_contract: ContractCreate, db: Session = Depends(get_db)):
+def update_contract(
+    contract_id: int,
+    updated_contract: ContractCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
+
+
     contract = db.query(Contract).filter(Contract.id == contract_id).first()
 
 
@@ -312,7 +329,11 @@ def update_contract(contract_id: int, updated_contract: ContractCreate, db: Sess
 
 
 @router.delete("/{contract_id}")
-def delete_contract(contract_id: int, db: Session = Depends(get_db)):
+def delete_contract(
+    contract_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     contract = db.query(Contract).filter(Contract.id == contract_id).first()
 
 

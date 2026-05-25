@@ -7,6 +7,8 @@ from app.db.database import SessionLocal
 from app.models.department import Department
 from app.schemas.department_schema import DepartmentCreate, DepartmentResponse
 
+from app.core.security import require_roles
+
 from app.services.cache_service import (
     get_cache,
     set_cache,
@@ -44,7 +46,11 @@ def smart_search(query, column, value):
 
 
 @router.post("/", response_model=DepartmentResponse)
-def create_department(department: DepartmentCreate, db: Session = Depends(get_db)):
+def create_department(
+    department: DepartmentCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
+):
     new_department = Department(
         name=department.name,
         description=department.description
@@ -63,7 +69,8 @@ def create_department(department: DepartmentCreate, db: Session = Depends(get_db
 def get_departments(
     name: Optional[str] = Query(None, description="Smart search department names"),
     description: Optional[str] = Query(None, description="Smart search department descriptions"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
 ):
     cache_key = (
         f"departments:"
@@ -101,7 +108,11 @@ def get_departments(
 
 
 @router.get("/{department_id}", response_model=DepartmentResponse)
-def get_department(department_id: int, db: Session = Depends(get_db)):
+def get_department(
+    department_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
+):
     cache_key = f"departments:id={department_id}"
 
     cached_data = get_cache(cache_key)
@@ -132,7 +143,8 @@ def get_department(department_id: int, db: Session = Depends(get_db)):
 def update_department(
     department_id: int,
     updated_department: DepartmentCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
 ):
     department = db.query(Department).filter(Department.id == department_id).first()
 
@@ -151,7 +163,11 @@ def update_department(
 
 
 @router.delete("/{department_id}")
-def delete_department(department_id: int, db: Session = Depends(get_db)):
+def delete_department(
+    department_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
+):
     department = db.query(Department).filter(Department.id == department_id).first()
 
     if not department:
@@ -162,5 +178,6 @@ def delete_department(department_id: int, db: Session = Depends(get_db)):
 
     delete_cache_by_pattern("departments:*")
 
-    return {"message": "Department deleted successfully"}
-
+    return {
+        "message": "Department deleted successfully"
+    }

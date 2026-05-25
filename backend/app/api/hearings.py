@@ -4,6 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
+from app.core.security import require_roles
 
 from app.db.database import SessionLocal
 from app.models.hearing import Hearing
@@ -109,7 +110,11 @@ def date_search(query, column, value):
 
 
 @router.post("/", response_model=HearingResponse)
-def create_hearing(hearing: HearingCreate, db: Session = Depends(get_db)):
+def create_hearing(
+    hearing: HearingCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     status = "Completed" if hearing.hearing_date < datetime.utcnow() else "Scheduled"
 
 
@@ -142,7 +147,10 @@ def get_hearings(
     status: Optional[str] = Query(None, description="Smart search hearing status"),
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     hearing_date: Optional[str] = Query(None, description="Filter by hearing date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     cache_key = (
         f"hearings:"
@@ -206,7 +214,13 @@ def get_hearings(
 
 
 @router.get("/{hearing_id}", response_model=HearingResponse)
-def get_hearing(hearing_id: int, db: Session = Depends(get_db)):
+def get_hearing(
+    hearing_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     cache_key = f"hearings:id={hearing_id}"
 
 
@@ -247,7 +261,12 @@ def get_hearing(hearing_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{hearing_id}", response_model=HearingResponse)
-def update_hearing(hearing_id: int, updated_hearing: HearingCreate, db: Session = Depends(get_db)):
+def update_hearing(
+    hearing_id: int,
+    updated_hearing: HearingCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     hearing = db.query(Hearing).filter(Hearing.id == hearing_id).first()
 
 
@@ -275,7 +294,11 @@ def update_hearing(hearing_id: int, updated_hearing: HearingCreate, db: Session 
 
 
 @router.delete("/{hearing_id}")
-def delete_hearing(hearing_id: int, db: Session = Depends(get_db)):
+def delete_hearing(
+    hearing_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     hearing = db.query(Hearing).filter(Hearing.id == hearing_id).first()
 
 

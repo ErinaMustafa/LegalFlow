@@ -22,6 +22,7 @@ from app.background.tasks import (
     send_case_closed_email_background
 )
 
+from app.core.security import require_roles
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
 
@@ -123,7 +124,10 @@ def get_cases(
     practice_area_id: Optional[int] = Query(None, description="Filter by practice area ID"),
     created_at: Optional[str] = Query(None, description="Filter by created date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
     closed_at: Optional[str] = Query(None, description="Filter by closed date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Finance", "Assistant")
+    )
 ):
     cache_key = (
         f"cases:"
@@ -196,7 +200,11 @@ def get_cases(
 
 
 @router.post("/", response_model=CaseResponse)
-def create_case(case: CaseCreate, db: Session = Depends(get_db)):
+def create_case(
+    case: CaseCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     new_case = Case(
         title=case.title,
         description=case.description,
@@ -205,46 +213,41 @@ def create_case(case: CaseCreate, db: Session = Depends(get_db)):
         practice_area_id=case.practice_area_id
     )
 
-
     if case.status == "Closed":
         new_case.closed_at = datetime.utcnow()
-
 
     db.add(new_case)
     db.commit()
     db.refresh(new_case)
 
-
     delete_cache_by_pattern("cases:*")
-
 
     return new_case
 
 
 
-
 @router.get("/{case_id}", response_model=CaseResponse)
-def get_case(case_id: int, db: Session = Depends(get_db)):
+def get_case(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Finance", "Assistant")
+    )
+):
     cache_key = f"cases:id={case_id}"
 
-
     cached_data = get_cache(cache_key)
-
 
     if cached_data:
         print("CACHE HIT - Case returned from Redis")
         return cached_data
 
-
     print("CACHE MISS - Case returned from Supabase")
-
 
     case = db.query(Case).filter(Case.id == case_id).first()
 
-
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
-
 
     response = {
         "id": case.id,
@@ -257,12 +260,9 @@ def get_case(case_id: int, db: Session = Depends(get_db)):
         "closed_at": case.closed_at.isoformat() if case.closed_at else None
     }
 
-
     set_cache(cache_key, response, expire=3600)
 
-
     return response
-
 
 
 
@@ -271,7 +271,8 @@ def update_case(
     case_id: int,
     updated_case: CaseCreate,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     case = db.query(Case).filter(Case.id == case_id).first()
 
@@ -312,21 +313,22 @@ def update_case(
 
 
 @router.delete("/{case_id}")
-def delete_case(case_id: int, db: Session = Depends(get_db)):
+def delete_case(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     case = db.query(Case).filter(Case.id == case_id).first()
-
 
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-
     db.delete(case)
     db.commit()
 
-
     delete_cache_by_pattern("cases:*")
 
-
-    return {"message": "Case deleted successfully"}
-
+    return {
+        "message": "Case deleted successfully"
+    }
 

@@ -4,7 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.court_decision import CourtDecision
 from app.models.case import Case
@@ -134,7 +134,10 @@ def get_court_decisions(
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     hearing_id: Optional[int] = Query(None, description="Filter by hearing ID"),
     document_id: Optional[int] = Query(None, description="Filter by document ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     cache_key = (
         f"court_decisions:"
@@ -211,18 +214,19 @@ def get_court_decisions(
 
 @router.post("/", response_model=CourtDecisionResponse)
 def create_court_decision(
-    decision: CourtDecisionCreate,
+    court_decision: CourtDecisionCreate,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     new_decision = CourtDecision(
-        title=decision.title,
-        decision_text=decision.decision_text,
-        decision_date=decision.decision_date,
-        status=decision.status,
-        case_id=decision.case_id,
-        hearing_id=decision.hearing_id,
-        document_id=decision.document_id
+        title=court_decision.title,
+        decision_text=court_decision.decision_text,
+        decision_date=court_decision.decision_date,
+        status=court_decision.status,
+        case_id=court_decision.case_id,
+        hearing_id=court_decision.hearing_id,
+        document_id=court_decision.document_id
     )
 
     db.add(new_decision)
@@ -250,7 +254,10 @@ def create_court_decision(
 @router.get("/{decision_id}", response_model=CourtDecisionResponse)
 def get_court_decision(
     decision_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     cache_key = f"court_decisions:id={decision_id}"
 
@@ -302,7 +309,8 @@ def get_court_decision(
 def update_court_decision(
     decision_id: int,
     updated_decision: CourtDecisionCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     decision = db.query(CourtDecision).filter(
         CourtDecision.id == decision_id
@@ -340,7 +348,8 @@ def update_court_decision(
 @router.delete("/{decision_id}")
 def delete_court_decision(
     decision_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
 ):
     decision = db.query(CourtDecision).filter(
         CourtDecision.id == decision_id

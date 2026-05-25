@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.document import Document
 from app.schemas.document_schema import DocumentCreate, DocumentResponse
@@ -88,7 +88,10 @@ def get_documents(
     ),
 
 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant", "Finance")
+    )
 ):
     cache_key = (
         f"documents:"
@@ -157,7 +160,11 @@ def get_documents(
 
 
 @router.post("/", response_model=DocumentResponse)
-def create_document(document: DocumentCreate, db: Session = Depends(get_db)):
+def create_document(
+    document: DocumentCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer", "Assistant"))
+):
 
 
     new_document = Document(
@@ -183,8 +190,13 @@ def create_document(document: DocumentCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{document_id}", response_model=DocumentResponse)
-def get_document(document_id: int, db: Session = Depends(get_db)):
-
+def get_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant", "Finance")
+    )
+):
 
     cache_key = f"documents:id={document_id}"
 
@@ -234,7 +246,8 @@ def get_document(document_id: int, db: Session = Depends(get_db)):
 def update_document(
     document_id: int,
     updated_document: DocumentCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer", "Assistant"))
 ):
 
 
@@ -270,7 +283,11 @@ def update_document(
 
 
 @router.delete("/{document_id}")
-def delete_document(document_id: int, db: Session = Depends(get_db)):
+def delete_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
 
 
     document = db.query(Document).filter(

@@ -4,7 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.time_entry import TimeEntry
 from app.schemas.time_entry_schema import TimeEntryCreate, TimeEntryResponse
@@ -127,7 +127,10 @@ def get_time_entries(
     task_id: Optional[int] = Query(None, description="Filter by task ID"),
 
 
-    db: Session = Depends(get_db)
+   db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Finance")
+)
 ):
     cache_key = (
         f"time_entries:"
@@ -213,7 +216,11 @@ def get_time_entries(
 
 
 @router.post("/", response_model=TimeEntryResponse)
-def create_time_entry(time_entry: TimeEntryCreate, db: Session = Depends(get_db)):
+def create_time_entry(
+    time_entry: TimeEntryCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     new_time_entry = TimeEntry(
         hours=time_entry.hours,
         description=time_entry.description,
@@ -238,7 +245,13 @@ def create_time_entry(time_entry: TimeEntryCreate, db: Session = Depends(get_db)
 
 
 @router.get("/{time_entry_id}", response_model=TimeEntryResponse)
-def get_time_entry(time_entry_id: int, db: Session = Depends(get_db)):
+def get_time_entry(
+    time_entry_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Finance")
+    )
+):
     cache_key = f"time_entries:id={time_entry_id}"
 
 
@@ -280,7 +293,12 @@ def get_time_entry(time_entry_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{time_entry_id}", response_model=TimeEntryResponse)
-def update_time_entry(time_entry_id: int, updated_time_entry: TimeEntryCreate, db: Session = Depends(get_db)):
+def update_time_entry(
+    time_entry_id: int,
+    updated_time_entry: TimeEntryCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     time_entry = db.query(TimeEntry).filter(TimeEntry.id == time_entry_id).first()
 
 
@@ -309,7 +327,11 @@ def update_time_entry(time_entry_id: int, updated_time_entry: TimeEntryCreate, d
 
 
 @router.delete("/{time_entry_id}")
-def delete_time_entry(time_entry_id: int, db: Session = Depends(get_db)):
+def delete_time_entry(
+    time_entry_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
+):
     time_entry = db.query(TimeEntry).filter(TimeEntry.id == time_entry_id).first()
 
 

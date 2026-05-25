@@ -4,7 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.appointment import Appointment
 from app.schemas.appointment_schema import AppointmentCreate, AppointmentResponse
@@ -97,7 +97,10 @@ def get_appointments(
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     appointment_date: Optional[str] = Query(None, description="Filter by appointment date"),
     created_at: Optional[str] = Query(None, description="Filter by created date"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+)
 ):
     cache_key = f"appointments:title={title}:description={description}:location={location}:status={status}:user_id={user_id}:client_id={client_id}:case_id={case_id}:appointment_date={appointment_date}:created_at={created_at}"
 
@@ -167,7 +170,13 @@ def get_appointments(
 
 
 @router.post("/", response_model=AppointmentResponse)
-def create_appointment(appointment: AppointmentCreate, db: Session = Depends(get_db)):
+def create_appointment(
+    appointment: AppointmentCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     now = datetime.utcnow().replace(tzinfo=appointment.appointment_date.tzinfo)
     status = "Completed" if appointment.appointment_date < now else "Scheduled"
 
@@ -198,7 +207,13 @@ def create_appointment(appointment: AppointmentCreate, db: Session = Depends(get
 
 
 @router.get("/{appointment_id}", response_model=AppointmentResponse)
-def get_appointment(appointment_id: int, db: Session = Depends(get_db)):
+def get_appointment(
+    appointment_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
 
 
@@ -212,7 +227,14 @@ def get_appointment(appointment_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{appointment_id}", response_model=AppointmentResponse)
-def update_appointment(appointment_id: int, updated_appointment: AppointmentCreate, db: Session = Depends(get_db)):
+def update_appointment(
+    appointment_id: int,
+    updated_appointment: AppointmentCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
 
 
@@ -246,7 +268,13 @@ def update_appointment(appointment_id: int, updated_appointment: AppointmentCrea
 
 
 @router.delete("/{appointment_id}")
-def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
+def delete_appointment(
+    appointment_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
 
 

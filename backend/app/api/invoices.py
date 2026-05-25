@@ -4,7 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.invoice import Invoice
 from app.schemas.invoice_schema import InvoiceCreate, InvoiceResponse
@@ -118,7 +118,8 @@ def get_invoices(
     issued_date: Optional[str] = Query(None, description="Filter by issued date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
     due_date: Optional[str] = Query(None, description="Filter by due date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
     client_id: Optional[int] = Query(None, description="Filter by client ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
 ):
     cache_key = (
         f"invoices:"
@@ -198,7 +199,11 @@ def get_invoices(
 
 
 @router.post("/", response_model=InvoiceResponse)
-def create_invoice(invoice: InvoiceCreate, db: Session = Depends(get_db)):
+def create_invoice(
+    invoice: InvoiceCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     new_invoice = Invoice(
         invoice_number=invoice.invoice_number,
         amount=invoice.amount,
@@ -220,9 +225,12 @@ def create_invoice(invoice: InvoiceCreate, db: Session = Depends(get_db)):
 
 
 
-
 @router.get("/{invoice_id}", response_model=InvoiceResponse)
-def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
+def get_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     cache_key = f"invoices:id={invoice_id}"
 
 
@@ -264,7 +272,12 @@ def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{invoice_id}", response_model=InvoiceResponse)
-def update_invoice(invoice_id: int, updated_invoice: InvoiceCreate, db: Session = Depends(get_db)):
+def update_invoice(
+    invoice_id: int,
+    updated_invoice: InvoiceCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
 
 
@@ -292,7 +305,11 @@ def update_invoice(invoice_id: int, updated_invoice: InvoiceCreate, db: Session 
 
 
 @router.delete("/{invoice_id}")
-def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
+def delete_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
 
 

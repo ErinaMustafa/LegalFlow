@@ -8,7 +8,7 @@ from typing import Optional
 from app.db.database import SessionLocal
 from app.models.case_note import CaseNote
 from app.schemas.case_note_schema import CaseNoteCreate, CaseNoteResponse
-
+from app.core.security import require_roles
 
 from app.services.cache_service import (
     get_cache,
@@ -111,7 +111,10 @@ def get_case_notes(
     note: Optional[str] = Query(None, description="Smart search case notes"),
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     created_at: Optional[str] = Query(None, description="Filter by created date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+)
 ):
     cache_key = (
         f"case_notes:"
@@ -169,7 +172,11 @@ def get_case_notes(
 
 
 @router.post("/", response_model=CaseNoteResponse)
-def create_case_note(case_note: CaseNoteCreate, db: Session = Depends(get_db)):
+def create_case_note(
+    case_note: CaseNoteCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     new_case_note = CaseNote(
         note=case_note.note,
         created_at=case_note.created_at,
@@ -191,10 +198,15 @@ def create_case_note(case_note: CaseNoteCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{case_note_id}", response_model=CaseNoteResponse)
-def get_case_note(case_note_id: int, db: Session = Depends(get_db)):
+def get_case_note(
+    case_note_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
+
     cache_key = f"case_notes:id={case_note_id}"
-
-
     cached_data = get_cache(cache_key)
 
 
@@ -230,7 +242,12 @@ def get_case_note(case_note_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{case_note_id}", response_model=CaseNoteResponse)
-def update_case_note(case_note_id: int, updated_case_note: CaseNoteCreate, db: Session = Depends(get_db)):
+def update_case_note(
+    case_note_id: int,
+    updated_case_note: CaseNoteCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     case_note = db.query(CaseNote).filter(CaseNote.id == case_note_id).first()
 
 
@@ -256,7 +273,11 @@ def update_case_note(case_note_id: int, updated_case_note: CaseNoteCreate, db: S
 
 
 @router.delete("/{case_note_id}")
-def delete_case_note(case_note_id: int, db: Session = Depends(get_db)):
+def delete_case_note(
+    case_note_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Lawyer"))
+):
     case_note = db.query(CaseNote).filter(CaseNote.id == case_note_id).first()
 
 

@@ -4,7 +4,7 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.payment import Payment
 from app.models.invoice import Invoice
@@ -118,7 +118,8 @@ def get_payments(
     amount_max: Optional[float] = Query(None, description="Filter by maximum amount"),
     payment_date: Optional[str] = Query(None, description="Filter by payment date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
     invoice_id: Optional[int] = Query(None, description="Filter by invoice ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
 ):
     cache_key = (
         f"payments:"
@@ -195,7 +196,11 @@ def get_payments(
 
 
 @router.post("/", response_model=PaymentResponse)
-def create_payment(payment: PaymentCreate, db: Session = Depends(get_db)):
+def create_payment(
+    payment: PaymentCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     invoice = db.query(Invoice).filter(Invoice.id == payment.invoice_id).first()
 
 
@@ -234,7 +239,11 @@ def create_payment(payment: PaymentCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{payment_id}", response_model=PaymentResponse)
-def get_payment(payment_id: int, db: Session = Depends(get_db)):
+def get_payment(
+    payment_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     cache_key = f"payments:id={payment_id}"
 
 
@@ -275,7 +284,12 @@ def get_payment(payment_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{payment_id}", response_model=PaymentResponse)
-def update_payment(payment_id: int, updated_payment: PaymentCreate, db: Session = Depends(get_db)):
+def update_payment(
+    payment_id: int,
+    updated_payment: PaymentCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     payment = db.query(Payment).filter(Payment.id == payment_id).first()
 
 
@@ -316,7 +330,11 @@ def update_payment(payment_id: int, updated_payment: PaymentCreate, db: Session 
 
 
 @router.delete("/{payment_id}")
-def delete_payment(payment_id: int, db: Session = Depends(get_db)):
+def delete_payment(
+    payment_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin", "Finance"))
+):
     payment = db.query(Payment).filter(Payment.id == payment_id).first()
 
 

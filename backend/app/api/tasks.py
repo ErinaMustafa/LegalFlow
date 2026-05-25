@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
-
+from app.core.security import require_roles
 
 from app.db.database import SessionLocal
 from app.models.task import Task
@@ -116,7 +116,10 @@ def get_tasks(
     priority: Optional[str] = Query(None, description="Smart search task priority"),
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     created_at: Optional[str] = Query(None, description="Filter by created date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+)
 ):
     cache_key = (
         f"tasks:"
@@ -183,7 +186,13 @@ def get_tasks(
 
 
 @router.post("/", response_model=TaskResponse)
-def create_task(task: TaskCreate, db: Session = Depends(get_db)):
+def create_task(
+    task: TaskCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     new_task = Task(
         title=task.title,
         description=task.description,
@@ -207,7 +216,13 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
-def get_task(task_id: int, db: Session = Depends(get_db)):
+def get_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     cache_key = f"tasks:id={task_id}"
 
 
@@ -249,7 +264,14 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
-def update_task(task_id: int, updated_task: TaskCreate, db: Session = Depends(get_db)):
+def update_task(
+    task_id: int,
+    updated_task: TaskCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     task = db.query(Task).filter(Task.id == task_id).first()
 
 
@@ -277,7 +299,13 @@ def update_task(task_id: int, updated_task: TaskCreate, db: Session = Depends(ge
 
 
 @router.delete("/{task_id}")
-def delete_task(task_id: int, db: Session = Depends(get_db)):
+def delete_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     task = db.query(Task).filter(Task.id == task_id).first()
 
 

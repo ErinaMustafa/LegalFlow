@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import case
 from typing import Optional
-
+from app.core.security import require_roles
 
 from app.db.database import SessionLocal
 from app.models.practice_area import PracticeArea
@@ -49,7 +49,11 @@ def smart_search(query, column, value):
 
 
 @router.post("/", response_model=PracticeAreaResponse)
-def create_practice_area(practice_area: PracticeAreaCreate, db: Session = Depends(get_db)):
+def create_practice_area(
+    practice_area: PracticeAreaCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
+):
     new_practice_area = PracticeArea(
         name=practice_area.name,
         description=practice_area.description
@@ -73,7 +77,10 @@ def create_practice_area(practice_area: PracticeAreaCreate, db: Session = Depend
 def get_practice_areas(
     name: Optional[str] = Query(None, description="Smart search practice area names"),
     description: Optional[str] = Query(None, description="Smart search practice area descriptions"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+)
 ):
     cache_key = f"practice_areas:name={name}:description={description}"
 
@@ -119,7 +126,13 @@ def get_practice_areas(
 
 
 @router.get("/{practice_area_id}", response_model=PracticeAreaResponse)
-def get_practice_area(practice_area_id: int, db: Session = Depends(get_db)):
+def get_practice_area(
+    practice_area_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
+):
     cache_key = f"practice_areas:id={practice_area_id}"
 
 
@@ -157,7 +170,12 @@ def get_practice_area(practice_area_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{practice_area_id}", response_model=PracticeAreaResponse)
-def update_practice_area(practice_area_id: int, updated_practice_area: PracticeAreaCreate, db: Session = Depends(get_db)):
+def update_practice_area(
+    practice_area_id: int,
+    updated_practice_area: PracticeAreaCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
+):
     practice_area = db.query(PracticeArea).filter(PracticeArea.id == practice_area_id).first()
 
 
@@ -182,7 +200,11 @@ def update_practice_area(practice_area_id: int, updated_practice_area: PracticeA
 
 
 @router.delete("/{practice_area_id}")
-def delete_practice_area(practice_area_id: int, db: Session = Depends(get_db)):
+def delete_practice_area(
+    practice_area_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles("Admin"))
+):
     practice_area = db.query(PracticeArea).filter(PracticeArea.id == practice_area_id).first()
 
 

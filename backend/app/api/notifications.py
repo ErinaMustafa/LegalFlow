@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.notification import Notification
 from app.schemas.notification_schema import (
@@ -112,7 +112,10 @@ def get_notifications(
         None,
         description="Filter by created date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"
     ),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+)
 ):
     cache_key = (
         f"notifications:"
@@ -180,7 +183,10 @@ def get_notifications(
 def create_notification(
     notification: NotificationCreate,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     new_notification = Notification(
         title=notification.title,
@@ -213,7 +219,10 @@ def create_notification(
 @router.get("/{notification_id}", response_model=NotificationResponse)
 def get_notification(
     notification_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     cache_key = f"notifications:id={notification_id}"
 
@@ -256,7 +265,10 @@ def get_notification(
 def update_notification(
     notification_id: int,
     updated_notification: NotificationCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     notification = db.query(Notification).filter(
         Notification.id == notification_id
@@ -288,7 +300,10 @@ def update_notification(
 @router.delete("/{notification_id}")
 def delete_notification(
     notification_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     notification = db.query(Notification).filter(
         Notification.id == notification_id

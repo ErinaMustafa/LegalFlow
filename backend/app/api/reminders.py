@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
-
+from app.core.security import require_roles
 from app.db.database import SessionLocal
 from app.models.reminder import Reminder
 from app.schemas.reminder_schema import ReminderCreate, ReminderResponse
@@ -114,7 +114,10 @@ def get_reminders(
         None,
         description="Filter by reminder date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"
     ),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+    require_roles("Admin", "Lawyer", "Manager", "Assistant")
+)
 ):
     cache_key = (
         f"reminders:"
@@ -182,7 +185,10 @@ def get_reminders(
 def create_reminder(
     reminder: ReminderCreate,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     status = (
         "Expired"
@@ -221,7 +227,10 @@ def create_reminder(
 @router.get("/{reminder_id}", response_model=ReminderResponse)
 def get_reminder(
     reminder_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     cache_key = f"reminders:id={reminder_id}"
 
@@ -264,7 +273,11 @@ def get_reminder(
 def update_reminder(
     reminder_id: int,
     updated_reminder: ReminderCreate,
-    db: Session = Depends(get_db)
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     reminder = db.query(Reminder).filter(
         Reminder.id == reminder_id
@@ -300,7 +313,10 @@ def update_reminder(
 @router.delete("/{reminder_id}")
 def delete_reminder(
     reminder_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(
+        require_roles("Admin", "Lawyer", "Manager", "Assistant")
+    )
 ):
     reminder = db.query(Reminder).filter(
         Reminder.id == reminder_id
