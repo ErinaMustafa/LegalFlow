@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
 
+
 from app.db.database import SessionLocal
 from app.models.contract import Contract
+from app.models.case import Case
+from app.models.client import Client
 from app.schemas.contract_schema import ContractCreate, ContractResponse
 
 
@@ -14,6 +17,10 @@ from app.services.cache_service import (
     get_cache,
     set_cache,
     delete_cache_by_pattern
+)
+
+from app.background.tasks import (
+    send_contract_expiration_email_background
 )
 
 
@@ -103,6 +110,19 @@ def date_search(query, column, value):
 
     return query
 
+def is_contract_near_expiration(end_date):
+    if not end_date:
+        return False
+
+    now = datetime.utcnow()
+
+    if end_date.tzinfo is not None and end_date.utcoffset() is not None:
+        now = datetime.now(end_date.tzinfo)
+
+    warning_date = now + timedelta(days=30)
+
+    return now <= end_date <= warning_date
+
 
 
 
@@ -181,7 +201,11 @@ def get_contracts(
 
 
 @router.post("/", response_model=ContractResponse)
-def create_contract(contract: ContractCreate, db: Session = Depends(get_db)):
+def create_contract(
+    contract: ContractCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
     new_contract = Contract(
         title=contract.title,
         contract_type=contract.contract_type,
@@ -191,17 +215,28 @@ def create_contract(contract: ContractCreate, db: Session = Depends(get_db)):
         case_id=contract.case_id
     )
 
-
     db.add(new_contract)
     db.commit()
     db.refresh(new_contract)
 
-
     delete_cache_by_pattern("contracts:*")
 
+    if is_contract_near_expiration(new_contract.end_date):
+        case = db.query(Case).filter(Case.id == new_contract.case_id).first()
+
+        if case:
+            client = db.query(Client).filter(Client.id == case.client_id).first()
+
+            if client and client.email:
+                background_tasks.add_task(
+                    send_contract_expiration_email_background,
+                    client.email,
+                    client.full_name,
+                    new_contract.title,
+                    new_contract.end_date.isoformat()
+                )
 
     return new_contract
-
 
 
 

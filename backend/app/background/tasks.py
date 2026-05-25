@@ -7,7 +7,9 @@ import os
 
 from app.db.database import SessionLocal
 from app.models.ai_analysis import AIAnalysis
+from app.models.user import User
 from app.services.cache_service import delete_cache_by_pattern
+from app.services.email_service import send_email
 
 
 env_path = Path(__file__).resolve().parents[2] / ".env"
@@ -22,6 +24,123 @@ def write_background_log(message: str):
         file.write(f"[{datetime.utcnow()}] {message}\n")
 
 
+def send_email_background(
+    to_email: str,
+    subject: str,
+    body: str
+):
+    print("BACKGROUND JOB STARTED - Email")
+
+    try:
+        send_email(
+            to_email,
+            subject,
+            body
+        )
+
+        write_background_log(
+            f"Email sent successfully | To: {to_email} | Subject: {subject}"
+        )
+
+        print("BACKGROUND JOB FINISHED - Email")
+
+    except Exception as e:
+        write_background_log(
+            f"Email failed | To: {to_email} | Subject: {subject} | Error: {str(e)}"
+        )
+
+        print(f"BACKGROUND JOB FAILED - Email | Error: {str(e)}")
+
+
+def send_welcome_email_background(
+    to_email: str,
+    username: str
+):
+    subject = "Welcome to LegalFlow"
+
+    body = (
+        f"Hello {username},\n\n"
+        f"Your LegalFlow account has been created successfully.\n\n"
+        f"You can now log in and use the system.\n\n"
+        f"Thank you,\n"
+        f"LegalFlow Team"
+    )
+
+    send_email_background(
+        to_email,
+        subject,
+        body
+    )
+
+
+def send_case_closed_email_background(
+    to_email: str,
+    username: str,
+    case_title: str
+):
+    subject = "LegalFlow Case Closed"
+
+    body = (
+        f"Hello {username},\n\n"
+        f"Your case has been marked as closed.\n\n"
+        f"Case: {case_title}\n\n"
+        f"Please log in to LegalFlow for more details.\n\n"
+        f"LegalFlow Team"
+    )
+
+    send_email_background(
+        to_email,
+        subject,
+        body
+    )
+
+
+def send_contract_expiration_email_background(
+    to_email: str,
+    username: str,
+    contract_title: str,
+    end_date: str
+):
+    subject = "LegalFlow Contract Expiration Warning"
+
+    body = (
+        f"Hello {username},\n\n"
+        f"A contract is nearing expiration.\n\n"
+        f"Contract: {contract_title}\n"
+        f"End Date: {end_date}\n\n"
+        f"Please review the contract in LegalFlow.\n\n"
+        f"LegalFlow Team"
+    )
+
+    send_email_background(
+        to_email,
+        subject,
+        body
+    )
+
+
+def send_court_decision_email_background(
+    to_email: str,
+    username: str,
+    decision_title: str
+):
+    subject = "LegalFlow Court Decision Update"
+
+    body = (
+        f"Hello {username},\n\n"
+        f"A new court decision has been registered.\n\n"
+        f"Decision: {decision_title}\n\n"
+        f"Please log in to LegalFlow for more details.\n\n"
+        f"LegalFlow Team"
+    )
+
+    send_email_background(
+        to_email,
+        subject,
+        body
+    )
+
+
 def send_notification_background(
     notification_id: int,
     title: str,
@@ -34,6 +153,54 @@ def send_notification_background(
         f"Notification processed | ID: {notification_id} | "
         f"Title: {title} | Message: {message} | User ID: {user_id}"
     )
+
+    if user_id:
+        db = SessionLocal()
+
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+
+            if user and user.email:
+                important_words = [
+                    "urgent",
+                    "important",
+                    "deadline",
+                    "hearing",
+                    "court"
+                ]
+
+                notification_text = f"{title} {message}".lower()
+
+                is_important = any(
+                    word in notification_text
+                    for word in important_words
+                )
+
+                if is_important:
+                    send_email(
+                        user.email,
+                        "Important LegalFlow Notification",
+                        (
+                            f"Hello {user.username},\n\n"
+                            f"You have received an important notification.\n\n"
+                            f"Title: {title}\n"
+                            f"Message: {message}\n\n"
+                            f"Please log in to LegalFlow for more details.\n\n"
+                            f"LegalFlow Team"
+                        )
+                    )
+
+                    write_background_log(
+                        f"Important notification email sent | To: {user.email}"
+                    )
+
+        except Exception as e:
+            write_background_log(
+                f"Notification email failed | Error: {str(e)}"
+            )
+
+        finally:
+            db.close()
 
     print("BACKGROUND JOB FINISHED - Notification")
 

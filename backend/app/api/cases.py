@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
 
+
 from app.db.database import SessionLocal
 from app.models.case import Case
+from app.models.client import Client
 from app.schemas.case_schema import CaseCreate, CaseResponse
 
 
@@ -14,6 +16,10 @@ from app.services.cache_service import (
     get_cache,
     set_cache,
     delete_cache_by_pattern
+)
+
+from app.background.tasks import (
+    send_case_closed_email_background
 )
 
 
@@ -261,13 +267,18 @@ def get_case(case_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{case_id}", response_model=CaseResponse)
-def update_case(case_id: int, updated_case: CaseCreate, db: Session = Depends(get_db)):
+def update_case(
+    case_id: int,
+    updated_case: CaseCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
     case = db.query(Case).filter(Case.id == case_id).first()
-
 
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
+    old_status = case.status
 
     case.title = updated_case.title
     case.description = updated_case.description
@@ -275,22 +286,28 @@ def update_case(case_id: int, updated_case: CaseCreate, db: Session = Depends(ge
     case.client_id = updated_case.client_id
     case.practice_area_id = updated_case.practice_area_id
 
-
     if updated_case.status == "Closed":
         case.closed_at = datetime.utcnow()
     else:
         case.closed_at = None
 
-
     db.commit()
     db.refresh(case)
 
-
     delete_cache_by_pattern("cases:*")
 
+    if old_status != "Closed" and case.status == "Closed":
+        client = db.query(Client).filter(Client.id == case.client_id).first()
+
+        if client and client.email:
+            background_tasks.add_task(
+                send_case_closed_email_background,
+                client.email,
+                client.full_name,
+                case.title
+            )
 
     return case
-
 
 
 

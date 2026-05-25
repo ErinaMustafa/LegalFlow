@@ -2,3 +2,13 @@
 [2026-05-25 13:35:24.573415] Notification processed | ID: 10 | Title: Test Notification | Message: Background notification test | User ID: 1
 [2026-05-25 13:40:15.512220] Reminder processed | ID: 10 | Title: Court Reminder | Message: Court tomorrow | User ID: 1
 [2026-05-25 13:44:44.849772] AI analysis completed | ID: 14 | User ID: 10
+[2026-05-25 14:56:26.033837] Email sent successfully | To: legalflowproject@gmail.com | Subject: Welcome to LegalFlow
+[2026-05-25 16:01:53.012995] Email sent successfully | To: curiousmind.es@gmail.com | Subject: Welcome to LegalFlow
+[2026-05-25 16:32:03.990072] Email sent successfully | To: trim.morina@email.com | Subject: LegalFlow Case Closed
+[2026-05-25 16:41:56.102992] Email sent successfully | To: curiousmind.es@gmail.com | Subject: LegalFlow Case Closed
+[2026-05-25 16:42:53.036512] Notification processed | ID: 13 | Title: Urgent Court Update | Message: Your court hearing deadline changed. | User ID: 1
+[2026-05-25 16:42:56.460038] Important notification email sent | To: admin@email.com
+[2026-05-25 16:43:48.124054] Notification processed | ID: 14 | Title: Urgent Court Update | Message: Your court hearing deadline changed. | User ID: 12
+[2026-05-25 16:43:50.278354] Important notification email sent | To: curiousmind.es@gmail.com
+[2026-05-25 16:45:09.839104] Email sent successfully | To: curiousmind.es@gmail.com | Subject: LegalFlow Contract Expiration Warning
+[2026-05-25 16:45:57.756732] Email sent successfully | To: curiousmind.es@gmail.com | Subject: LegalFlow Court Decision Update

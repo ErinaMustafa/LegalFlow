@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import case
 from datetime import datetime, timedelta
@@ -7,6 +7,9 @@ from typing import Optional
 
 from app.db.database import SessionLocal
 from app.models.court_decision import CourtDecision
+from app.models.case import Case
+from app.models.client import Client
+
 from app.schemas.court_decision_schema import (
     CourtDecisionCreate,
     CourtDecisionResponse
@@ -17,6 +20,10 @@ from app.services.cache_service import (
     get_cache,
     set_cache,
     delete_cache_by_pattern
+)
+
+from app.background.tasks import (
+    send_court_decision_email_background
 )
 
 
@@ -205,6 +212,7 @@ def get_court_decisions(
 @router.post("/", response_model=CourtDecisionResponse)
 def create_court_decision(
     decision: CourtDecisionCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     new_decision = CourtDecision(
@@ -217,18 +225,26 @@ def create_court_decision(
         document_id=decision.document_id
     )
 
-
     db.add(new_decision)
     db.commit()
     db.refresh(new_decision)
 
-
     delete_cache_by_pattern("court_decisions:*")
 
+    case = db.query(Case).filter(Case.id == new_decision.case_id).first()
+
+    if case:
+        client = db.query(Client).filter(Client.id == case.client_id).first()
+
+        if client and client.email:
+            background_tasks.add_task(
+                send_court_decision_email_background,
+                client.email,
+                client.full_name,
+                new_decision.title
+            )
 
     return new_decision
-
-
 
 
 @router.get("/{decision_id}", response_model=CourtDecisionResponse)
