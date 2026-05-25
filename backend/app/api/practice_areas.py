@@ -3,17 +3,18 @@ from sqlalchemy.orm import Session
 from sqlalchemy import case
 from typing import Optional
 
+
 from app.db.database import SessionLocal
 from app.models.practice_area import PracticeArea
-from app.schemas.practice_area_schema import (
-    PracticeAreaCreate,
-    PracticeAreaResponse
-)
+from app.schemas.practice_area_schema import PracticeAreaCreate, PracticeAreaResponse
 
-router = APIRouter(
-    prefix="/practice-areas",
-    tags=["Practice Areas"]
-)
+
+from app.services.cache_service import get_cache, set_cache, delete_cache_by_pattern
+
+
+router = APIRouter(prefix="/practice-areas", tags=["Practice Areas"])
+
+
 
 
 def get_db():
@@ -24,14 +25,15 @@ def get_db():
         db.close()
 
 
+
+
 def smart_search(query, column, value):
     if value:
         if len(value) == 1:
             return query.filter(column.ilike(f"{value}%"))
 
-        return query.filter(
-            column.ilike(f"%{value}%")
-        ).order_by(
+
+        return query.filter(column.ilike(f"%{value}%")).order_by(
             case(
                 (column.ilike(value), 0),
                 (column.ilike(f"{value}%"), 1),
@@ -40,103 +42,160 @@ def smart_search(query, column, value):
             )
         )
 
+
     return query
 
 
+
+
 @router.post("/", response_model=PracticeAreaResponse)
-def create_practice_area(
-    practice_area: PracticeAreaCreate,
-    db: Session = Depends(get_db)
-):
+def create_practice_area(practice_area: PracticeAreaCreate, db: Session = Depends(get_db)):
     new_practice_area = PracticeArea(
         name=practice_area.name,
         description=practice_area.description
     )
 
+
     db.add(new_practice_area)
     db.commit()
     db.refresh(new_practice_area)
 
+
+    delete_cache_by_pattern("practice_areas:*")
+
+
     return new_practice_area
+
+
 
 
 @router.get("/", response_model=list[PracticeAreaResponse])
 def get_practice_areas(
-    name: Optional[str] = Query(
-        None,
-        description="Smart search practice area names"
-    ),
-
-    description: Optional[str] = Query(
-        None,
-        description="Smart search practice area descriptions"
-    ),
-
+    name: Optional[str] = Query(None, description="Smart search practice area names"),
+    description: Optional[str] = Query(None, description="Smart search practice area descriptions"),
     db: Session = Depends(get_db)
 ):
+    cache_key = f"practice_areas:name={name}:description={description}"
+
+
+    cached_data = get_cache(cache_key)
+
+
+    if cached_data:
+        print("CACHE HIT - Practice Areas returned from Redis")
+        return cached_data
+
+
+    print("CACHE MISS - Practice Areas returned from Supabase")
+
+
     query = db.query(PracticeArea)
+
 
     query = smart_search(query, PracticeArea.name, name)
     query = smart_search(query, PracticeArea.description, description)
 
-    return query.all()
+
+    practice_areas = query.all()
+
+
+    response = []
+
+
+    for practice_area in practice_areas:
+        response.append({
+            "id": practice_area.id,
+            "name": practice_area.name,
+            "description": practice_area.description
+        })
+
+
+    set_cache(cache_key, response, expire=3600)
+
+
+    return response
+
+
 
 
 @router.get("/{practice_area_id}", response_model=PracticeAreaResponse)
 def get_practice_area(practice_area_id: int, db: Session = Depends(get_db)):
+    cache_key = f"practice_areas:id={practice_area_id}"
 
-    practice_area = db.query(PracticeArea).filter(
-        PracticeArea.id == practice_area_id
-    ).first()
+
+    cached_data = get_cache(cache_key)
+
+
+    if cached_data:
+        print("CACHE HIT - Practice Area returned from Redis")
+        return cached_data
+
+
+    print("CACHE MISS - Practice Area returned from Supabase")
+
+
+    practice_area = db.query(PracticeArea).filter(PracticeArea.id == practice_area_id).first()
+
 
     if not practice_area:
-        raise HTTPException(
-            status_code=404,
-            detail="Practice area not found"
-        )
+        raise HTTPException(status_code=404, detail="Practice area not found")
 
-    return practice_area
+
+    response = {
+        "id": practice_area.id,
+        "name": practice_area.name,
+        "description": practice_area.description
+    }
+
+
+    set_cache(cache_key, response, expire=3600)
+
+
+    return response
+
+
 
 
 @router.put("/{practice_area_id}", response_model=PracticeAreaResponse)
-def update_practice_area(
-    practice_area_id: int,
-    updated_practice_area: PracticeAreaCreate,
-    db: Session = Depends(get_db)
-):
-    practice_area = db.query(PracticeArea).filter(
-        PracticeArea.id == practice_area_id
-    ).first()
+def update_practice_area(practice_area_id: int, updated_practice_area: PracticeAreaCreate, db: Session = Depends(get_db)):
+    practice_area = db.query(PracticeArea).filter(PracticeArea.id == practice_area_id).first()
+
 
     if not practice_area:
-        raise HTTPException(
-            status_code=404,
-            detail="Practice area not found"
-        )
+        raise HTTPException(status_code=404, detail="Practice area not found")
+
 
     practice_area.name = updated_practice_area.name
     practice_area.description = updated_practice_area.description
 
+
     db.commit()
     db.refresh(practice_area)
+
+
+    delete_cache_by_pattern("practice_areas:*")
+
 
     return practice_area
 
 
+
+
 @router.delete("/{practice_area_id}")
 def delete_practice_area(practice_area_id: int, db: Session = Depends(get_db)):
+    practice_area = db.query(PracticeArea).filter(PracticeArea.id == practice_area_id).first()
 
-    practice_area = db.query(PracticeArea).filter(
-        PracticeArea.id == practice_area_id
-    ).first()
 
     if not practice_area:
-        raise HTTPException(
-            status_code=404,
-            detail="Practice area not found"
-        )
+        raise HTTPException(status_code=404, detail="Practice area not found")
+
 
     db.delete(practice_area)
     db.commit()
 
+
+    delete_cache_by_pattern("practice_areas:*")
+
+
     return {"message": "Practice area deleted successfully"}
+
