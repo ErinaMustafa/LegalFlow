@@ -7,6 +7,12 @@ from app.db.database import SessionLocal
 from app.models.department import Department
 from app.schemas.department_schema import DepartmentCreate, DepartmentResponse
 
+from app.services.cache_service import (
+    get_cache,
+    set_cache,
+    delete_cache_by_pattern
+)
+
 router = APIRouter(prefix="/departments", tags=["Departments"])
 
 
@@ -48,6 +54,8 @@ def create_department(department: DepartmentCreate, db: Session = Depends(get_db
     db.commit()
     db.refresh(new_department)
 
+    delete_cache_by_pattern("departments:*")
+
     return new_department
 
 
@@ -57,23 +65,67 @@ def get_departments(
     description: Optional[str] = Query(None, description="Smart search department descriptions"),
     db: Session = Depends(get_db)
 ):
+    cache_key = (
+        f"departments:"
+        f"name={name}:"
+        f"description={description}"
+    )
+
+    cached_data = get_cache(cache_key)
+
+    if cached_data:
+        print("CACHE HIT - Departments returned from Redis")
+        return cached_data
+
+    print("CACHE MISS - Departments returned from Supabase")
+
     query = db.query(Department)
 
     query = smart_search(query, Department.name, name)
     query = smart_search(query, Department.description, description)
 
-    return query.all()
+    departments = query.all()
+
+    response = []
+
+    for department in departments:
+        response.append({
+            "id": department.id,
+            "name": department.name,
+            "description": department.description
+        })
+
+    set_cache(cache_key, response, expire=3600)
+
+    return response
 
 
 @router.get("/{department_id}", response_model=DepartmentResponse)
 def get_department(department_id: int, db: Session = Depends(get_db)):
+    cache_key = f"departments:id={department_id}"
+
+    cached_data = get_cache(cache_key)
+
+    if cached_data:
+        print("CACHE HIT - Department returned from Redis")
+        return cached_data
+
+    print("CACHE MISS - Department returned from Supabase")
 
     department = db.query(Department).filter(Department.id == department_id).first()
 
     if not department:
         raise HTTPException(status_code=404, detail="Department not found")
 
-    return department
+    response = {
+        "id": department.id,
+        "name": department.name,
+        "description": department.description
+    }
+
+    set_cache(cache_key, response, expire=3600)
+
+    return response
 
 
 @router.put("/{department_id}", response_model=DepartmentResponse)
@@ -93,12 +145,13 @@ def update_department(
     db.commit()
     db.refresh(department)
 
+    delete_cache_by_pattern("departments:*")
+
     return department
 
 
 @router.delete("/{department_id}")
 def delete_department(department_id: int, db: Session = Depends(get_db)):
-
     department = db.query(Department).filter(Department.id == department_id).first()
 
     if not department:
@@ -107,4 +160,7 @@ def delete_department(department_id: int, db: Session = Depends(get_db)):
     db.delete(department)
     db.commit()
 
+    delete_cache_by_pattern("departments:*")
+
     return {"message": "Department deleted successfully"}
+

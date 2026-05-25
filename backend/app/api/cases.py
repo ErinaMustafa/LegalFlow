@@ -4,11 +4,22 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
+
 from app.db.database import SessionLocal
 from app.models.case import Case
 from app.schemas.case_schema import CaseCreate, CaseResponse
 
+
+from app.services.cache_service import (
+    get_cache,
+    set_cache,
+    delete_cache_by_pattern
+)
+
+
 router = APIRouter(prefix="/cases", tags=["Cases"])
+
+
 
 
 def get_db():
@@ -19,10 +30,13 @@ def get_db():
         db.close()
 
 
+
+
 def smart_search(query, column, value):
     if value:
         if len(value) == 1:
             return query.filter(column.ilike(f"{value}%"))
+
 
         return query.filter(
             column.ilike(f"%{value}%")
@@ -35,7 +49,10 @@ def smart_search(query, column, value):
             )
         )
 
+
     return query
+
+
 
 
 def date_search(query, column, value):
@@ -45,31 +62,39 @@ def date_search(query, column, value):
                 start = datetime.strptime(value, "%Y")
                 end = datetime(start.year + 1, 1, 1)
 
+
             elif len(value) == 7:
                 start = datetime.strptime(value, "%Y-%m")
+
 
                 if start.month == 12:
                     end = datetime(start.year + 1, 1, 1)
                 else:
                     end = datetime(start.year, start.month + 1, 1)
 
+
             elif len(value) == 10:
                 start = datetime.strptime(value, "%Y-%m-%d")
                 end = start + timedelta(days=1)
+
 
             elif len(value) == 13:
                 start = datetime.strptime(value, "%Y-%m-%dT%H")
                 end = start + timedelta(hours=1)
 
+
             elif len(value) == 16:
                 start = datetime.strptime(value, "%Y-%m-%dT%H:%M")
                 end = start + timedelta(minutes=1)
+
 
             else:
                 start = datetime.fromisoformat(value)
                 end = start + timedelta(seconds=1)
 
+
             return query.filter(column >= start, column < end)
+
 
         except ValueError:
             raise HTTPException(
@@ -77,7 +102,10 @@ def date_search(query, column, value):
                 detail="Invalid date format. Use YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, or YYYY-MM-DDTHH:MM"
             )
 
+
     return query
+
+
 
 
 @router.get("/", response_model=list[CaseResponse])
@@ -91,22 +119,74 @@ def get_cases(
     closed_at: Optional[str] = Query(None, description="Filter by closed date: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDTHH, YYYY-MM-DDTHH:MM"),
     db: Session = Depends(get_db)
 ):
+    cache_key = (
+        f"cases:"
+        f"title={title}:"
+        f"description={description}:"
+        f"status={status}:"
+        f"client_id={client_id}:"
+        f"practice_area_id={practice_area_id}:"
+        f"created_at={created_at}:"
+        f"closed_at={closed_at}"
+    )
+
+
+    cached_data = get_cache(cache_key)
+
+
+    if cached_data:
+        print("CACHE HIT - Cases returned from Redis")
+        return cached_data
+
+
+    print("CACHE MISS - Cases returned from Supabase")
+
+
     query = db.query(Case)
+
 
     query = smart_search(query, Case.title, title)
     query = smart_search(query, Case.description, description)
     query = smart_search(query, Case.status, status)
 
+
     if client_id is not None:
         query = query.filter(Case.client_id == client_id)
+
 
     if practice_area_id is not None:
         query = query.filter(Case.practice_area_id == practice_area_id)
 
+
     query = date_search(query, Case.created_at, created_at)
     query = date_search(query, Case.closed_at, closed_at)
 
-    return query.all()
+
+    cases = query.all()
+
+
+    response = []
+
+
+    for case_item in cases:
+        response.append({
+            "id": case_item.id,
+            "title": case_item.title,
+            "description": case_item.description,
+            "status": case_item.status,
+            "client_id": case_item.client_id,
+            "practice_area_id": case_item.practice_area_id,
+            "created_at": case_item.created_at.isoformat() if case_item.created_at else None,
+            "closed_at": case_item.closed_at.isoformat() if case_item.closed_at else None
+        })
+
+
+    set_cache(cache_key, response, expire=3600)
+
+
+    return response
+
+
 
 
 @router.post("/", response_model=CaseResponse)
@@ -119,32 +199,75 @@ def create_case(case: CaseCreate, db: Session = Depends(get_db)):
         practice_area_id=case.practice_area_id
     )
 
+
     if case.status == "Closed":
         new_case.closed_at = datetime.utcnow()
+
 
     db.add(new_case)
     db.commit()
     db.refresh(new_case)
 
+
+    delete_cache_by_pattern("cases:*")
+
+
     return new_case
+
+
 
 
 @router.get("/{case_id}", response_model=CaseResponse)
 def get_case(case_id: int, db: Session = Depends(get_db)):
+    cache_key = f"cases:id={case_id}"
+
+
+    cached_data = get_cache(cache_key)
+
+
+    if cached_data:
+        print("CACHE HIT - Case returned from Redis")
+        return cached_data
+
+
+    print("CACHE MISS - Case returned from Supabase")
+
+
     case = db.query(Case).filter(Case.id == case_id).first()
+
 
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    return case
+
+    response = {
+        "id": case.id,
+        "title": case.title,
+        "description": case.description,
+        "status": case.status,
+        "client_id": case.client_id,
+        "practice_area_id": case.practice_area_id,
+        "created_at": case.created_at.isoformat() if case.created_at else None,
+        "closed_at": case.closed_at.isoformat() if case.closed_at else None
+    }
+
+
+    set_cache(cache_key, response, expire=3600)
+
+
+    return response
+
+
 
 
 @router.put("/{case_id}", response_model=CaseResponse)
 def update_case(case_id: int, updated_case: CaseCreate, db: Session = Depends(get_db)):
     case = db.query(Case).filter(Case.id == case_id).first()
 
+
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+
 
     case.title = updated_case.title
     case.description = updated_case.description
@@ -152,25 +275,41 @@ def update_case(case_id: int, updated_case: CaseCreate, db: Session = Depends(ge
     case.client_id = updated_case.client_id
     case.practice_area_id = updated_case.practice_area_id
 
+
     if updated_case.status == "Closed":
         case.closed_at = datetime.utcnow()
     else:
         case.closed_at = None
 
+
     db.commit()
     db.refresh(case)
 
+
+    delete_cache_by_pattern("cases:*")
+
+
     return case
+
+
 
 
 @router.delete("/{case_id}")
 def delete_case(case_id: int, db: Session = Depends(get_db)):
     case = db.query(Case).filter(Case.id == case_id).first()
 
+
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
+
 
     db.delete(case)
     db.commit()
 
+
+    delete_cache_by_pattern("cases:*")
+
+
     return {"message": "Case deleted successfully"}
+
+

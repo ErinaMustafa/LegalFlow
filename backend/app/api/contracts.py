@@ -4,11 +4,22 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 
+
 from app.db.database import SessionLocal
 from app.models.contract import Contract
 from app.schemas.contract_schema import ContractCreate, ContractResponse
 
+
+from app.services.cache_service import (
+    get_cache,
+    set_cache,
+    delete_cache_by_pattern
+)
+
+
 router = APIRouter(prefix="/contracts", tags=["Contracts"])
+
+
 
 
 def get_db():
@@ -19,10 +30,13 @@ def get_db():
         db.close()
 
 
+
+
 def smart_search(query, column, value):
     if value:
         if len(value) == 1:
             return query.filter(column.ilike(f"{value}%"))
+
 
         return query.filter(column.ilike(f"%{value}%")).order_by(
             case(
@@ -33,7 +47,10 @@ def smart_search(query, column, value):
             )
         )
 
+
     return query
+
+
 
 
 def date_search(query, column, value):
@@ -43,31 +60,39 @@ def date_search(query, column, value):
                 start = datetime.strptime(value, "%Y")
                 end = datetime(start.year + 1, 1, 1)
 
+
             elif len(value) == 7:
                 start = datetime.strptime(value, "%Y-%m")
+
 
                 if start.month == 12:
                     end = datetime(start.year + 1, 1, 1)
                 else:
                     end = datetime(start.year, start.month + 1, 1)
 
+
             elif len(value) == 10:
                 start = datetime.strptime(value, "%Y-%m-%d")
                 end = start + timedelta(days=1)
+
 
             elif len(value) == 13:
                 start = datetime.strptime(value, "%Y-%m-%dT%H")
                 end = start + timedelta(hours=1)
 
+
             elif len(value) == 16:
                 start = datetime.strptime(value, "%Y-%m-%dT%H:%M")
                 end = start + timedelta(minutes=1)
+
 
             else:
                 start = datetime.fromisoformat(value)
                 end = start + timedelta(seconds=1)
 
+
             return query.filter(column >= start, column < end)
+
 
         except ValueError:
             raise HTTPException(
@@ -75,7 +100,10 @@ def date_search(query, column, value):
                 detail="Invalid date format"
             )
 
+
     return query
+
+
 
 
 @router.get("/", response_model=list[ContractResponse])
@@ -88,19 +116,68 @@ def get_contracts(
     case_id: Optional[int] = Query(None, description="Filter by case ID"),
     db: Session = Depends(get_db)
 ):
+    cache_key = (
+        f"contracts:"
+        f"title={title}:"
+        f"contract_type={contract_type}:"
+        f"status={status}:"
+        f"start_date={start_date}:"
+        f"end_date={end_date}:"
+        f"case_id={case_id}"
+    )
+
+
+    cached_data = get_cache(cache_key)
+
+
+    if cached_data:
+        print("CACHE HIT - Contracts returned from Redis")
+        return cached_data
+
+
+    print("CACHE MISS - Contracts returned from Supabase")
+
+
     query = db.query(Contract)
+
 
     query = smart_search(query, Contract.title, title)
     query = smart_search(query, Contract.contract_type, contract_type)
     query = smart_search(query, Contract.status, status)
 
+
     query = date_search(query, Contract.start_date, start_date)
     query = date_search(query, Contract.end_date, end_date)
+
 
     if case_id is not None:
         query = query.filter(Contract.case_id == case_id)
 
-    return query.all()
+
+    contracts = query.all()
+
+
+    response = []
+
+
+    for contract in contracts:
+        response.append({
+            "id": contract.id,
+            "title": contract.title,
+            "contract_type": contract.contract_type,
+            "status": contract.status,
+            "start_date": contract.start_date.isoformat() if contract.start_date else None,
+            "end_date": contract.end_date.isoformat() if contract.end_date else None,
+            "case_id": contract.case_id
+        })
+
+
+    set_cache(cache_key, response, expire=3600)
+
+
+    return response
+
+
 
 
 @router.post("/", response_model=ContractResponse)
@@ -114,29 +191,70 @@ def create_contract(contract: ContractCreate, db: Session = Depends(get_db)):
         case_id=contract.case_id
     )
 
+
     db.add(new_contract)
     db.commit()
     db.refresh(new_contract)
 
+
+    delete_cache_by_pattern("contracts:*")
+
+
     return new_contract
+
+
 
 
 @router.get("/{contract_id}", response_model=ContractResponse)
 def get_contract(contract_id: int, db: Session = Depends(get_db)):
+    cache_key = f"contracts:id={contract_id}"
+
+
+    cached_data = get_cache(cache_key)
+
+
+    if cached_data:
+        print("CACHE HIT - Contract returned from Redis")
+        return cached_data
+
+
+    print("CACHE MISS - Contract returned from Supabase")
+
+
     contract = db.query(Contract).filter(Contract.id == contract_id).first()
+
 
     if not contract:
         raise HTTPException(status_code=404, detail="Contract not found")
 
-    return contract
+
+    response = {
+        "id": contract.id,
+        "title": contract.title,
+        "contract_type": contract.contract_type,
+        "status": contract.status,
+        "start_date": contract.start_date.isoformat() if contract.start_date else None,
+        "end_date": contract.end_date.isoformat() if contract.end_date else None,
+        "case_id": contract.case_id
+    }
+
+
+    set_cache(cache_key, response, expire=3600)
+
+
+    return response
+
+
 
 
 @router.put("/{contract_id}", response_model=ContractResponse)
 def update_contract(contract_id: int, updated_contract: ContractCreate, db: Session = Depends(get_db)):
     contract = db.query(Contract).filter(Contract.id == contract_id).first()
 
+
     if not contract:
         raise HTTPException(status_code=404, detail="Contract not found")
+
 
     contract.title = updated_contract.title
     contract.contract_type = updated_contract.contract_type
@@ -145,20 +263,34 @@ def update_contract(contract_id: int, updated_contract: ContractCreate, db: Sess
     contract.end_date = updated_contract.end_date
     contract.case_id = updated_contract.case_id
 
+
     db.commit()
     db.refresh(contract)
 
+
+    delete_cache_by_pattern("contracts:*")
+
+
     return contract
+
+
 
 
 @router.delete("/{contract_id}")
 def delete_contract(contract_id: int, db: Session = Depends(get_db)):
     contract = db.query(Contract).filter(Contract.id == contract_id).first()
 
+
     if not contract:
         raise HTTPException(status_code=404, detail="Contract not found")
+
 
     db.delete(contract)
     db.commit()
 
+
+    delete_cache_by_pattern("contracts:*")
+
+
     return {"message": "Contract deleted successfully"}
+
