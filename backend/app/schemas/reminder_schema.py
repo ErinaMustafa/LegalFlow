@@ -2,14 +2,13 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
+
 class ReminderCreate(BaseModel):
     title: str
 
     message: str
 
     reminder_date: datetime
-
-    status: str
 
     user_id: int
 

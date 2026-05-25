@@ -1,0 +1,4 @@
+[2026-05-25 13:29:12.539394] Notification processed | ID: 9 | Title: Test Notification | Message: Background notification test | User ID: 1
+[2026-05-25 13:35:24.573415] Notification processed | ID: 10 | Title: Test Notification | Message: Background notification test | User ID: 1
+[2026-05-25 13:40:15.512220] Reminder processed | ID: 10 | Title: Court Reminder | Message: Court tomorrow | User ID: 1
+[2026-05-25 13:44:44.849772] AI analysis completed | ID: 14 | User ID: 10
