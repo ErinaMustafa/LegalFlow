@@ -1,4 +1,5 @@
 import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 function Sidebar() {
   const { user, logout } = useAuth();
@@ -89,9 +90,9 @@ function Sidebar() {
 
         <nav className="sidebar-nav">
           {menuItems.map((item) => (
-            <a key={item.path} href={item.path}>
-              {item.label}
-            </a>
+           <Link key={item.path} to={item.path}>
+                {item.label}
+            </Link>
           ))}
         </nav>
       </div>
