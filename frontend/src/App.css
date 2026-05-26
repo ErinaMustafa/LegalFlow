@@ -166,13 +166,16 @@
 }
 
 .app-layout {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
   grid-template-columns: 280px 1fr;
   background: #f8fafc;
+  overflow: hidden;
 }
 
 .sidebar {
+  height: 100vh;
+  overflow-y: scroll;
   background: white;
   border-right: 1px solid #e5e7eb;
   padding: 24px;
@@ -180,6 +183,7 @@
   flex-direction: column;
   justify-content: space-between;
 }
+
 
 .sidebar-brand {
   display: flex;
@@ -221,11 +225,13 @@
   font-weight: 600;
   padding: 13px 14px;
   border-radius: 14px;
+  transition: 0.2s ease;
 }
 
 .sidebar-nav a:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: #eff6ff;
+  color: #2563eb;
+  transform: translateX(3px);
 }
 
 .sidebar-user {
@@ -267,9 +273,12 @@
 }
 
 .main-content {
+  height: 100vh;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-
 .navbar {
   height: 76px;
   background: white;
@@ -297,7 +306,9 @@
 }
 
 .page-content {
+  flex: 1;
   padding: 48px 56px;
+  overflow-y: scroll;
 }
 
 .page-header span {
@@ -359,4 +370,35 @@
 
 .dashboard-panel h2 {
   margin-top: 0;
+}
+
+
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.page-content::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+  width: 7px;
+}
+
+.page-content::-webkit-scrollbar-thumb,
+.sidebar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.page-content::-webkit-scrollbar-track,
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
 }

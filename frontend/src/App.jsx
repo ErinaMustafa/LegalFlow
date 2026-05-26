@@ -1,16 +1,8 @@
-import { useAuth } from "./context/AuthContext";
-import Login from "./pages/auth/Login";
-import Dashboard from "./pages/Dashboard";
+import AppRoutes from "./routes/AppRoutes";
 import "./App.css";
 
 function App() {
-  const { user } = useAuth();
-
-  if (!user) {
-    return <Login />;
-  }
-
-  return <Dashboard />;
+  return <AppRoutes />;
 }
 
 export default App;

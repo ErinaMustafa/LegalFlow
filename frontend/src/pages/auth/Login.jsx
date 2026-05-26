@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import "../../App.css";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +22,7 @@ function Login() {
 
       const user = await login(email, password);
 
-      
+      navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.detail || "Login failed");
     } finally {
