@@ -20,7 +20,7 @@ function Login() {
 
       const user = await login(email, password);
 
-      alert(`Login successful as ${user.role}`);
+      
     } catch (err) {
       setError(err.response?.data?.detail || "Login failed");
     } finally {
@@ -51,7 +51,7 @@ function Login() {
       </section>
 
       <section className="login-right">
-        <form className="login-card" onSubmit={handleSubmit}>
+        <form className="login-card" onSubmit={handleSubmit} autoComplete="off">
           <h2>Welcome back</h2>
           <p className="subtitle">Sign in to continue to LegalFlow</p>
 
@@ -68,7 +68,7 @@ function Login() {
           <input
             type="password"
             placeholder="Enter your password"
-            value={password}
+            value={password} autoComplete="new-password"
             onChange={(e) => setPassword(e.target.value)}
             required
           />
