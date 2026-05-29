@@ -10,7 +10,7 @@ import Dashboard from "../pages/Dashboard";
 
 
 import Clients from "../pages/operations/Clients";
-
+import Cases from "../pages/legal/Cases";
 
 function PlaceholderPage({ title }) {
   return (
@@ -49,8 +49,14 @@ function AppRoutes() {
       <Clients />
     </ProtectedRoute>
   }
+/><Route
+  path="/cases"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}>
+      <Cases />
+    </ProtectedRoute>
+  }
 />
-        <Route path="/cases" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}><PlaceholderPage title="Cases" /></ProtectedRoute>} />
         <Route path="/case-notes" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer"]}><PlaceholderPage title="Case Notes" /></ProtectedRoute>} />
         <Route path="/contracts" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}><PlaceholderPage title="Contracts" /></ProtectedRoute>} />
         <Route path="/hearings" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Manager"]}><PlaceholderPage title="Hearings" /></ProtectedRoute>} />
