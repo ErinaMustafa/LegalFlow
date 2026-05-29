@@ -3,8 +3,12 @@ import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 
 
+
+
 function Sidebar() {
   const { user, logout } = useAuth();
+
+
 
 
   const menuByRole = {
@@ -13,11 +17,15 @@ function Sidebar() {
       { label: "Dashboard", path: "/dashboard" },
 
 
+
+
       { type: "group", label: "Administration" },
       { label: "Create User", path: "/admin/create-user" },
       { label: "Reset Password", path: "/admin/reset-password" },
       { label: "Roles", path: "/roles" },
       { label: "Departments", path: "/departments" },
+
+
 
 
       { type: "group", label: "Legal Management" },
@@ -30,6 +38,7 @@ function Sidebar() {
       { label: "Documents", path: "/documents" },
       { label: "Document Categories", path: "/document-categories" },
       { label: "Witnesses", path: "/witnesses" },
+      { label: "Calendar Events", path: "/calendar" },
 
 
       { type: "group", label: "Operations" },
@@ -42,6 +51,8 @@ function Sidebar() {
       { label: "Comments", path: "/comments" },
 
 
+
+
       { type: "group", label: "Finance" },
       { label: "Invoices", path: "/invoices" },
       { label: "Payments", path: "/payments" },
@@ -49,10 +60,14 @@ function Sidebar() {
       { label: "Time Entries", path: "/time-entries" },
 
 
+
+
       { type: "group", label: "AI & Audit" },
       { label: "AI Analyses", path: "/ai" },
       { label: "Audit Logs", path: "/audit-logs" },
     ],
+
+
 
 
     Lawyer: [
@@ -66,6 +81,8 @@ function Sidebar() {
       { label: "Witnesses", path: "/witnesses" },
       { label: "AI Analyses", path: "/ai" },
     ],
+
+
 
 
     Assistant: [
@@ -82,6 +99,8 @@ function Sidebar() {
     ],
 
 
+
+
     Manager: [
       { label: "Dashboard", path: "/dashboard" },
       { label: "Clients", path: "/clients" },
@@ -96,6 +115,8 @@ function Sidebar() {
     ],
 
 
+
+
     Finance: [
       { label: "Dashboard", path: "/dashboard" },
       { label: "Invoices", path: "/invoices" },
@@ -106,22 +127,32 @@ function Sidebar() {
   };
 
 
+
+
   const menuItems = menuByRole[user?.role] || [
     { label: "Dashboard", path: "/dashboard" },
   ];
 
 
+
+
   const sidebarRef = useRef(null);
+
+
 
 
   useEffect(() => {
     const savedScroll = sessionStorage.getItem("sidebarScroll");
 
 
+
+
     if (sidebarRef.current && savedScroll) {
       sidebarRef.current.scrollTop = Number(savedScroll);
     }
   }, []);
+
+
 
 
   const handleSidebarScroll = () => {
@@ -132,6 +163,8 @@ function Sidebar() {
       );
     }
   };
+
+
 
 
   return (
@@ -145,11 +178,15 @@ function Sidebar() {
           <div className="logo-box">⚖</div>
 
 
+
+
           <div>
             <h2>LegalFlow</h2>
             <p>{user?.username || "User"}</p>
           </div>
         </div>
+
+
 
 
         <nav className="sidebar-nav">
@@ -166,6 +203,8 @@ function Sidebar() {
             }
 
 
+
+
             return (
               <Link key={item.path} to={item.path}>
                 {item.label}
@@ -176,16 +215,22 @@ function Sidebar() {
       </div>
 
 
+
+
       <div className="sidebar-user">
         <div className="avatar">
           {user?.username?.charAt(0)?.toUpperCase() || "U"}
         </div>
 
 
+
+
         <div>
           <strong>{user?.username}</strong>
           <p>{user?.role}</p>
         </div>
+
+
 
 
         <button onClick={logout}>Sign out</button>
@@ -195,5 +240,11 @@ function Sidebar() {
 }
 
 
+
+
 export default Sidebar;
+
+
+
+
 
