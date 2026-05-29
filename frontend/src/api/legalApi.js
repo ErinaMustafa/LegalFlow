@@ -1,5 +1,6 @@
 import axiosClient from "./axiosClient";
 
+// CASES
 
 export const getCases = async (params = {}) => {
   const response = await axiosClient.get("/cases/", { params });
@@ -23,6 +24,8 @@ export const deleteCase = async (caseId) => {
   const response = await axiosClient.delete(`/cases/${caseId}`);
   return response.data;
 };
+
+// CONTRACTS
 export const getContracts = async (params = {}) => {
   const response = await axiosClient.get("/contracts/", { params });
   return response.data;

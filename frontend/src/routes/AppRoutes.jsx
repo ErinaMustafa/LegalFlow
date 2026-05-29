@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
+import Documents from "../pages/legal/Documents";
 
 import CourtDecisions from "../pages/legal/CourtDecisions";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -14,7 +14,6 @@ import Dashboard from "../pages/Dashboard";
 import Hearings from "../pages/legal/Hearings";
 import Clients from "../pages/operations/Clients";
 import Cases from "../pages/legal/Cases";
-
 
 function PlaceholderPage({ title }) {
   return (
@@ -68,6 +67,24 @@ function AppRoutes() {
   }
 />
         <Route path="/case-notes" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer"]}><PlaceholderPage title="Case Notes" /></ProtectedRoute>} />
+        <Route path="/contracts" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}><PlaceholderPage title="Contracts" /></ProtectedRoute>} />
+        <Route path="/hearings" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Manager"]}><PlaceholderPage title="Hearings" /></ProtectedRoute>} />
+        <Route path="/court-decisions" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Manager"]}><PlaceholderPage title="Court Decisions" /></ProtectedRoute>} />
+        <Route
+  path="/documents"
+  element={
+    <ProtectedRoute
+      allowedRoles={[
+        "Admin",
+        "Lawyer",
+        "Assistant",
+        "Manager"
+      ]}
+    >
+      <Documents />
+    </ProtectedRoute>
+  }
+/>
 <Route
   path="/contracts"
   element={
