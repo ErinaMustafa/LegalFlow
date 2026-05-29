@@ -1,8 +1,12 @@
 import axiosClient from "./axiosClient";
 
 
-export const getClients = async () => {
-  const response = await axiosClient.get("/clients/");
+export const getClients = async (params = {}) => {
+  const response = await axiosClient.get(
+    "/clients/",
+    { params }
+  );
+
   return response.data;
 };
 

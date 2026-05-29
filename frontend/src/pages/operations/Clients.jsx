@@ -21,21 +21,89 @@ function Clients() {
   const [editingId, setEditingId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
 
 
-  const loadClients = async () => {
-    try {
-      const data = await getClients();
-      setClients(data);
-    } catch (err) {
-      setError(err.response?.data?.detail || "Failed to load clients");
+  const loadClients = async (params = {}) => {
+  try {
+    const data = await getClients(params);
+    setClients(data);
+    setCurrentPage(1);
+  } catch (err) {
+    setError(err.response?.data?.detail || "Failed to load clients");
+  }
+};
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
+
+const searchClients = async (value) => {
+  // Search by ID locally
+  if (!isNaN(value)) {
+    const idResult = clients.filter(
+      (client) => client.id === Number(value)
+    );
+
+    if (idResult.length > 0) {
+      setClients(idResult);
+      setCurrentPage(1);
+      return;
     }
-  };
+  }
 
+  const fields = ["full_name", "email", "phone", "address"];
+
+  for (const field of fields) {
+    const data = await getClients({
+      [field]: value
+    });
+
+    if (data.length > 0) {
+      setClients(data);
+      setCurrentPage(1);
+      return;
+    }
+  }
+
+  setClients([]);
+  setCurrentPage(1);
+};
 
   useEffect(() => {
+  loadClients();
+}, []);
+
+useEffect(() => {
+  const value = search.trim();
+
+  if (!value) {
     loadClients();
-  }, []);
+    return;
+  }
+
+  const pageContent = document.querySelector(".page-content");
+  const tablePanel = document.querySelector(".clients-table-panel");
+
+  if (pageContent && tablePanel) {
+    pageContent.scrollTo({
+      top: tablePanel.offsetTop - 20,
+      behavior: "auto"
+    });
+  }
+
+  const delaySearch = setTimeout(() => {
+    searchClients(value);
+  }, 400);
+
+  return () => clearTimeout(delaySearch);
+}, [search]);
+
+  const totalPages = Math.ceil(clients.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+
+  const paginatedClients = clients.slice(startIndex, endIndex);
 
 
   const handleChange = (e) => {
@@ -57,6 +125,29 @@ function Clients() {
 
     setEditingId(null);
   };
+
+const handleSearch = async (e) => {
+  e.preventDefault();
+
+  const value = search.trim();
+
+  if (!value) {
+    loadClients();
+    return;
+  }
+
+  await searchClients(value);
+
+const pageContent = document.querySelector(".page-content");
+const tablePanel = document.querySelector(".clients-table-panel");
+
+if (pageContent && tablePanel) {
+  pageContent.scrollTo({
+    top: tablePanel.offsetTop - 20,
+    behavior: "smooth"
+  });
+}
+};
 
 
   const handleSubmit = async (e) => {
@@ -123,7 +214,11 @@ function Clients() {
 
 
   return (
-    <Layout>
+    <Layout
+  search={search}
+  setSearch={setSearch}
+  onSearch={handleSearch}
+>
       <div className="page-header">
         <span>OPERATIONS</span>
         <h1>Clients</h1>
@@ -188,9 +283,9 @@ function Clients() {
       </div>
 
 
-      <div className="dashboard-panel">
-        <h2>Client List</h2>
-
+      <div className="dashboard-panel clients-table-panel">
+        <h2>Client List ({clients.length})</h2>
+            
 
         <table className="data-table">
           <thead>
@@ -206,7 +301,7 @@ function Clients() {
 
 
           <tbody>
-            {clients.map((client) => (
+          {paginatedClients.map((client) => (
               <tr key={client.id}>
                 <td>{client.id}</td>
                 <td>{client.full_name}</td>
@@ -230,13 +325,48 @@ function Clients() {
             ))}
 
 
-            {clients.length === 0 && (
+            {paginatedClients.length === 0 && (
               <tr>
                 <td colSpan="6">No clients found.</td>
               </tr>
             )}
           </tbody>
         </table>
+        {clients.length > 0 && (
+  <div className="pagination">
+    <span>
+      Showing {startIndex + 1} -
+      {Math.min(endIndex, clients.length)}
+      {" "}of {clients.length} clients
+    </span>
+
+    <div className="pagination-buttons">
+      <button
+        type="button"
+        disabled={currentPage === 1}
+        onClick={() =>
+          setCurrentPage((prev) => prev - 1)
+        }
+      >
+        Previous
+      </button>
+
+      <span>
+        Page {currentPage} of {totalPages}
+      </span>
+
+      <button
+        type="button"
+        disabled={currentPage === totalPages}
+        onClick={() =>
+          setCurrentPage((prev) => prev + 1)
+        }
+      >
+        Next
+      </button>
+    </div>
+  </div>
+)}
       </div>
 
 
