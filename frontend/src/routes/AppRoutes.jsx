@@ -11,7 +11,7 @@ import Dashboard from "../pages/Dashboard";
 
 import Clients from "../pages/operations/Clients";
 import Cases from "../pages/legal/Cases";
-
+import Documents from "../pages/legal/Documents";
 function PlaceholderPage({ title }) {
   return (
     <Layout>
@@ -61,7 +61,21 @@ function AppRoutes() {
         <Route path="/contracts" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}><PlaceholderPage title="Contracts" /></ProtectedRoute>} />
         <Route path="/hearings" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Manager"]}><PlaceholderPage title="Hearings" /></ProtectedRoute>} />
         <Route path="/court-decisions" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Manager"]}><PlaceholderPage title="Court Decisions" /></ProtectedRoute>} />
-        <Route path="/documents" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}><PlaceholderPage title="Documents" /></ProtectedRoute>} />
+        <Route
+  path="/documents"
+  element={
+    <ProtectedRoute
+      allowedRoles={[
+        "Admin",
+        "Lawyer",
+        "Assistant",
+        "Manager"
+      ]}
+    >
+      <Documents />
+    </ProtectedRoute>
+  }
+/>
         <Route path="/document-categories" element={<ProtectedRoute allowedRoles={["Admin"]}><PlaceholderPage title="Document Categories" /></ProtectedRoute>} />
         <Route path="/witnesses" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer"]}><PlaceholderPage title="Witnesses" /></ProtectedRoute>} />
 
