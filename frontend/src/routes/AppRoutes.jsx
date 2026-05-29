@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Witnesses from "../pages/legal/Witnesses";
-
-
+import Appointments from "../pages/operations/Appointments";
+import Tasks from "../pages/operations/Tasks";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Layout from "../components/Layout";
+import CalendarEvents from "../pages/operations/CalendarEvents";
+
+
 
 
 
@@ -14,7 +17,15 @@ import Dashboard from "../pages/Dashboard";
 
 
 
+
+
+
+
 import Clients from "../pages/operations/Clients";
+
+
+
+
 
 
 
@@ -25,6 +36,10 @@ import Hearings from "../pages/legal/Hearings";
 import CourtDecisions from "../pages/legal/CourtDecisions";
 import Documents from "../pages/legal/Documents";
 import DocumentCategories from "../pages/legal/DocumentCategories";
+
+
+
+
 
 
 
@@ -44,11 +59,19 @@ function PlaceholderPage({ title }) {
 
 
 
+
+
+
+
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+
+
+
+
 
 
 
@@ -65,6 +88,10 @@ function AppRoutes() {
 
 
 
+
+
+
+
         <Route
           path="/clients"
           element={
@@ -73,6 +100,10 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+
+
+
 
 
 
@@ -89,6 +120,10 @@ function AppRoutes() {
 
 
 
+
+
+
+
         <Route
           path="/contracts"
           element={
@@ -97,6 +132,10 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+
+
+
 
 
 
@@ -113,6 +152,10 @@ function AppRoutes() {
 
 
 
+
+
+
+
         <Route
           path="/court-decisions"
           element={
@@ -125,6 +168,10 @@ function AppRoutes() {
 
 
 
+
+
+
+
         <Route
           path="/documents"
           element={
@@ -133,6 +180,10 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+
+
+
 
 
 
@@ -156,12 +207,39 @@ function AppRoutes() {
 />
 
 
-        <Route path="/tasks" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager"]}><PlaceholderPage title="Tasks" /></ProtectedRoute>} />
-        <Route path="/calendar" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}><PlaceholderPage title="Calendar Events" /></ProtectedRoute>} />
-        <Route path="/appointments" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager"]}><PlaceholderPage title="Appointments" /></ProtectedRoute>} />
+
+
+       <Route
+  path="/tasks"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}>
+      <Tasks />
+    </ProtectedRoute>
+  }
+/>
+       <Route
+  path="/calendar"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}>
+      <CalendarEvents />
+    </ProtectedRoute>
+  }
+/>
+       <Route
+  path="/appointments"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager"]}>
+      <Appointments />
+    </ProtectedRoute>
+  }
+/>
         <Route path="/reminders" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager"]}><PlaceholderPage title="Reminders" /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager"]}><PlaceholderPage title="Notifications" /></ProtectedRoute>} />
         <Route path="/comments" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager", "Lawyer"]}><PlaceholderPage title="Comments" /></ProtectedRoute>} />
+
+
+
+
 
 
 
@@ -174,8 +252,16 @@ function AppRoutes() {
 
 
 
+
+
+
+
         <Route path="/ai" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer"]}><PlaceholderPage title="AI Analyses" /></ProtectedRoute>} />
         <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={["Admin", "Manager"]}><PlaceholderPage title="Audit Logs" /></ProtectedRoute>} />
+
+
+
+
 
 
 
@@ -187,8 +273,16 @@ function AppRoutes() {
 
 
 
+
+
+
+
         <Route path="/admin/create-user" element={<ProtectedRoute allowedRoles={["Admin"]}><PlaceholderPage title="Create User" /></ProtectedRoute>} />
         <Route path="/admin/reset-password" element={<ProtectedRoute allowedRoles={["Admin"]}><PlaceholderPage title="Reset Password" /></ProtectedRoute>} />
+
+
+
+
 
 
 
@@ -203,7 +297,21 @@ function AppRoutes() {
 
 
 
+
+
+
+
 export default AppRoutes;
+
+
+
+
+
+
+
+
+
+
 
 
 
