@@ -1,13 +1,21 @@
 import axiosClient from "./axiosClient";
 
 
+
+
 // CASES
+
+
 
 
 export const getCases = async (params = {}) => {
   const response = await axiosClient.get("/cases/", { params });
   return response.data;
 };
+
+
+
+
 
 
 
@@ -20,10 +28,18 @@ export const createCase = async (caseData) => {
 
 
 
+
+
+
+
 export const updateCase = async (caseId, caseData) => {
   const response = await axiosClient.put(`/cases/${caseId}`, caseData);
   return response.data;
 };
+
+
+
+
 
 
 
@@ -34,11 +50,17 @@ export const deleteCase = async (caseId) => {
 };
 
 
+
+
 // CONTRACTS
 export const getContracts = async (params = {}) => {
   const response = await axiosClient.get("/contracts/", { params });
   return response.data;
 };
+
+
+
+
 
 
 
@@ -51,10 +73,18 @@ export const createContract = async (contractData) => {
 
 
 
+
+
+
+
 export const updateContract = async (contractId, contractData) => {
   const response = await axiosClient.put(`/contracts/${contractId}`, contractData);
   return response.data;
 };
+
+
+
+
 
 
 
@@ -67,10 +97,18 @@ export const deleteContract = async (contractId) => {
 
 
 
+
+
+
+
 export const getHearings = async (params = {}) => {
   const response = await axiosClient.get("/hearings/", { params });
   return response.data;
 };
+
+
+
+
 
 
 
@@ -83,10 +121,18 @@ export const createHearing = async (hearingData) => {
 
 
 
+
+
+
+
 export const updateHearing = async (hearingId, hearingData) => {
   const response = await axiosClient.put(`/hearings/${hearingId}`, hearingData);
   return response.data;
 };
+
+
+
+
 
 
 
@@ -103,10 +149,18 @@ export const getCourtDecisions = async (params = {}) => {
 
 
 
+
+
+
+
 export const createCourtDecision = async (decisionData) => {
   const response = await axiosClient.post("/court-decisions/", decisionData);
   return response.data;
 };
+
+
+
+
 
 
 
@@ -122,13 +176,21 @@ export const updateCourtDecision = async (decisionId, decisionData) => {
 
 
 
+
+
+
+
 export const deleteCourtDecision = async (decisionId) => {
   const response = await axiosClient.delete(`/court-decisions/${decisionId}`);
   return response.data;
 };
 
 
+
+
 // DOCUMENTS
+
+
 
 
 export const getDocuments = async (params = {}) => {
@@ -137,10 +199,14 @@ export const getDocuments = async (params = {}) => {
 };
 
 
+
+
 export const createDocument = async (documentData) => {
   const response = await axiosClient.post("/documents/", documentData);
   return response.data;
 };
+
+
 
 
 export const updateDocument = async (documentId, documentData) => {
@@ -152,12 +218,16 @@ export const updateDocument = async (documentId, documentData) => {
 };
 
 
+
+
 export const deleteDocument = async (documentId) => {
   const response = await axiosClient.delete(
     `/documents/${documentId}`
   );
   return response.data;
 };
+
+
 
 
 export const getDocumentCategories = async (params = {}) => {
@@ -169,10 +239,14 @@ export const getDocumentCategories = async (params = {}) => {
 };
 
 
+
+
 export const createDocumentCategory = async (categoryData) => {
   const response = await axiosClient.post("/document-categories/", categoryData);
   return response.data;
 };
+
+
 
 
 export const updateDocumentCategory = async (categoryId, categoryData) => {
@@ -184,8 +258,42 @@ export const updateDocumentCategory = async (categoryId, categoryData) => {
 };
 
 
+
+
 export const deleteDocumentCategory = async (categoryId) => {
   const response = await axiosClient.delete(`/document-categories/${categoryId}`);
   return response.data;
 };
+
+
+
+
+
+
+export const getWitnesses = async (params = {}) => {
+  const response = await axiosClient.get("/witnesses/", { params });
+  return response.data;
+};
+
+
+export const createWitness = async (witnessData) => {
+  const response = await axiosClient.post("/witnesses/", witnessData);
+  return response.data;
+};
+
+
+export const updateWitness = async (witnessId, witnessData) => {
+  const response = await axiosClient.put(`/witnesses/${witnessId}`, witnessData);
+  return response.data;
+};
+
+
+export const deleteWitness = async (witnessId) => {
+  const response = await axiosClient.delete(`/witnesses/${witnessId}`);
+  return response.data;
+};
+
+
+
+
 

@@ -1,15 +1,22 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Witnesses from "../pages/legal/Witnesses";
 
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import Layout from "../components/Layout";
 
 
+
+
 import Login from "../pages/auth/Login";
 import Dashboard from "../pages/Dashboard";
 
 
+
+
 import Clients from "../pages/operations/Clients";
+
+
 
 
 import Cases from "../pages/legal/Cases";
@@ -18,6 +25,8 @@ import Hearings from "../pages/legal/Hearings";
 import CourtDecisions from "../pages/legal/CourtDecisions";
 import Documents from "../pages/legal/Documents";
 import DocumentCategories from "../pages/legal/DocumentCategories";
+
+
 
 
 function PlaceholderPage({ title }) {
@@ -33,11 +42,15 @@ function PlaceholderPage({ title }) {
 }
 
 
+
+
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+
+
 
 
         <Route
@@ -50,6 +63,8 @@ function AppRoutes() {
         />
 
 
+
+
         <Route
           path="/clients"
           element={
@@ -58,6 +73,8 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+
 
 
         <Route
@@ -70,6 +87,8 @@ function AppRoutes() {
         />
 
 
+
+
         <Route
           path="/contracts"
           element={
@@ -78,6 +97,8 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+
 
 
         <Route
@@ -90,6 +111,8 @@ function AppRoutes() {
         />
 
 
+
+
         <Route
           path="/court-decisions"
           element={
@@ -98,6 +121,8 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+
+
 
 
         <Route
@@ -110,6 +135,8 @@ function AppRoutes() {
         />
 
 
+
+
         <Route path="/case-notes" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer"]}><PlaceholderPage title="Case Notes" /></ProtectedRoute>} />
         <Route
   path="/document-categories"
@@ -119,7 +146,14 @@ function AppRoutes() {
     </ProtectedRoute>
   }
 />
-        <Route path="/witnesses" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer"]}><PlaceholderPage title="Witnesses" /></ProtectedRoute>} />
+        <Route
+  path="/witnesses"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}>
+      <Witnesses />
+    </ProtectedRoute>
+  }
+/>
 
 
         <Route path="/tasks" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager"]}><PlaceholderPage title="Tasks" /></ProtectedRoute>} />
@@ -130,14 +164,20 @@ function AppRoutes() {
         <Route path="/comments" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager", "Lawyer"]}><PlaceholderPage title="Comments" /></ProtectedRoute>} />
 
 
+
+
         <Route path="/invoices" element={<ProtectedRoute allowedRoles={["Admin", "Finance", "Manager"]}><PlaceholderPage title="Invoices" /></ProtectedRoute>} />
         <Route path="/payments" element={<ProtectedRoute allowedRoles={["Admin", "Finance", "Manager"]}><PlaceholderPage title="Payments" /></ProtectedRoute>} />
         <Route path="/expenses" element={<ProtectedRoute allowedRoles={["Admin", "Finance", "Manager"]}><PlaceholderPage title="Expenses" /></ProtectedRoute>} />
         <Route path="/time-entries" element={<ProtectedRoute allowedRoles={["Admin", "Finance", "Manager", "Lawyer"]}><PlaceholderPage title="Time Entries" /></ProtectedRoute>} />
 
 
+
+
         <Route path="/ai" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer"]}><PlaceholderPage title="AI Analyses" /></ProtectedRoute>} />
         <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={["Admin", "Manager"]}><PlaceholderPage title="Audit Logs" /></ProtectedRoute>} />
+
+
 
 
         <Route path="/roles" element={<ProtectedRoute allowedRoles={["Admin"]}><PlaceholderPage title="Roles" /></ProtectedRoute>} />
@@ -145,8 +185,12 @@ function AppRoutes() {
         <Route path="/practice-areas" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer", "Manager"]}><PlaceholderPage title="Practice Areas" /></ProtectedRoute>} />
 
 
+
+
         <Route path="/admin/create-user" element={<ProtectedRoute allowedRoles={["Admin"]}><PlaceholderPage title="Create User" /></ProtectedRoute>} />
         <Route path="/admin/reset-password" element={<ProtectedRoute allowedRoles={["Admin"]}><PlaceholderPage title="Reset Password" /></ProtectedRoute>} />
+
+
 
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -157,5 +201,11 @@ function AppRoutes() {
 }
 
 
+
+
 export default AppRoutes;
+
+
+
+
 
