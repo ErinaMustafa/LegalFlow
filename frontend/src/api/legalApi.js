@@ -294,6 +294,26 @@ export const deleteWitness = async (witnessId) => {
 };
 
 
+export const getCaseNotes = async (params = {}) => {
+  const response = await axiosClient.get("/case-notes/", { params });
+  return response.data;
+};
+
+export const createCaseNote = async (noteData) => {
+  const response = await axiosClient.post("/case-notes/", noteData);
+  return response.data;
+};
+
+export const updateCaseNote = async (noteId, noteData) => {
+  const response = await axiosClient.put(`/case-notes/${noteId}`, noteData);
+  return response.data;
+};
+
+export const deleteCaseNote = async (noteId) => {
+  const response = await axiosClient.delete(`/case-notes/${noteId}`);
+  return response.data;
+};
+
 
 
 

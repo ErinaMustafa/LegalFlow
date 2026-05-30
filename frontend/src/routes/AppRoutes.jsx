@@ -13,6 +13,8 @@ import Payments from "../pages/finance/Payments";
 import Expenses from "../pages/finance/Expenses";
 import TimeEntries from "../pages/finance/TimeEntries";
 
+import CaseNotes from "../pages/legal/CaseNotes";
+
 
 import CreateUser from "../pages/admin/CreateUser";
 import ResetPassword from "../pages/admin/ResetPassword";
@@ -137,7 +139,14 @@ function AppRoutes() {
         />
 
 
-        <Route path="/case-notes" element={<ProtectedRoute allowedRoles={["Admin", "Lawyer"]}><PlaceholderPage title="Case Notes" /></ProtectedRoute>} />
+<Route
+  path="/case-notes"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Lawyer"]}>
+      <CaseNotes />
+    </ProtectedRoute>
+  }
+/>
 
 
         <Route
