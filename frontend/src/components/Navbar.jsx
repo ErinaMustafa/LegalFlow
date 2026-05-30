@@ -1,11 +1,15 @@
 
 
+
+
 import { useEffect, useState } from "react";
 import { getNotifications } from "../api/operationsApi";
+
 
 function Navbar({ search, setSearch, onSearch }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
+
 
   useEffect(() => {
     const loadNotifications = async () => {
@@ -17,18 +21,23 @@ function Navbar({ search, setSearch, onSearch }) {
       }
     };
 
+
     loadNotifications();
+
 
     const interval = setInterval(() => {
       loadNotifications();
-    }, 10000);
+    }, 60000);
+
 
     return () => clearInterval(interval);
   }, []);
 
+
   const unreadNotifications = notifications.filter(
     (item) => item.status === "Unread"
   );
+
 
   return (
     <header className="navbar">
@@ -40,6 +49,7 @@ function Navbar({ search, setSearch, onSearch }) {
           onChange={(e) => setSearch(e.target.value)}
         />
       </form>
+
 
       <div className="notification-wrapper">
         <button
@@ -55,13 +65,16 @@ function Navbar({ search, setSearch, onSearch }) {
           )}
         </button>
 
+
         {open && (
           <div className="notification-dropdown">
             <h4>Notifications</h4>
 
+
             {unreadNotifications.length === 0 && (
               <p>No unread notifications.</p>
             )}
+
 
             {unreadNotifications.slice(0, 5).map((item) => (
               <button
@@ -84,5 +97,10 @@ function Navbar({ search, setSearch, onSearch }) {
   );
 }
 
+
 export default Navbar;
+
+
+
+
 

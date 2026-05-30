@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import Layout from "../../components/Layout";
 import {
-  getDepartments,
-  createDepartment,
-  updateDepartment,
-  deleteDepartment
+  getPracticeAreas,
+  createPracticeArea,
+  updatePracticeArea,
+  deletePracticeArea
 } from "../../api/adminApi";
 
 
-function Departments() {
-  const [departments, setDepartments] = useState([]);
+function PracticeAreas() {
+  const [practiceAreas, setPracticeAreas] = useState([]);
 
 
   const [form, setForm] = useState({
@@ -28,26 +28,26 @@ function Departments() {
   const itemsPerPage = 7;
 
 
-  const loadDepartments = async (params = {}) => {
+  const loadPracticeAreas = async (params = {}) => {
     try {
-      const data = await getDepartments(params);
-      setDepartments(data);
+      const data = await getPracticeAreas(params);
+      setPracticeAreas(data);
       setCurrentPage(1);
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to load departments");
+      setError(err.response?.data?.detail || "Failed to load practice areas");
     }
   };
 
 
-  const searchDepartments = async (value) => {
+  const searchPracticeAreas = async (value) => {
     if (!isNaN(value)) {
-      const idResult = departments.filter(
-        (department) => department.id === Number(value)
+      const idResult = practiceAreas.filter(
+        (practiceArea) => practiceArea.id === Number(value)
       );
 
 
       if (idResult.length > 0) {
-        setDepartments(idResult);
+        setPracticeAreas(idResult);
         setCurrentPage(1);
         return;
       }
@@ -58,24 +58,24 @@ function Departments() {
 
 
     for (const field of fields) {
-      const data = await getDepartments({ [field]: value });
+      const data = await getPracticeAreas({ [field]: value });
 
 
       if (data.length > 0) {
-        setDepartments(data);
+        setPracticeAreas(data);
         setCurrentPage(1);
         return;
       }
     }
 
 
-    setDepartments([]);
+    setPracticeAreas([]);
     setCurrentPage(1);
   };
 
 
   useEffect(() => {
-    loadDepartments();
+    loadPracticeAreas();
   }, []);
 
 
@@ -84,13 +84,13 @@ function Departments() {
 
 
     if (!value) {
-      loadDepartments();
+      loadPracticeAreas();
       return;
     }
 
 
     const pageContent = document.querySelector(".page-content");
-    const tablePanel = document.querySelector(".departments-table-panel");
+    const tablePanel = document.querySelector(".practice-areas-table-panel");
 
 
     if (pageContent && tablePanel) {
@@ -102,7 +102,7 @@ function Departments() {
 
 
     const delaySearch = setTimeout(() => {
-      searchDepartments(value);
+      searchPracticeAreas(value);
     }, 400);
 
 
@@ -110,10 +110,10 @@ function Departments() {
   }, [search]);
 
 
-  const totalPages = Math.ceil(departments.length / itemsPerPage);
+  const totalPages = Math.ceil(practiceAreas.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedDepartments = departments.slice(startIndex, endIndex);
+  const paginatedPracticeAreas = practiceAreas.slice(startIndex, endIndex);
 
 
   const handleChange = (e) => {
@@ -143,16 +143,16 @@ function Departments() {
 
 
     if (!value) {
-      loadDepartments();
+      loadPracticeAreas();
       return;
     }
 
 
-    await searchDepartments(value);
+    await searchPracticeAreas(value);
 
 
     const pageContent = document.querySelector(".page-content");
-    const tablePanel = document.querySelector(".departments-table-panel");
+    const tablePanel = document.querySelector(".practice-areas-table-panel");
 
 
     if (pageContent && tablePanel) {
@@ -179,27 +179,27 @@ function Departments() {
 
 
       if (editingId) {
-        await updateDepartment(editingId, payload);
+        await updatePracticeArea(editingId, payload);
       } else {
-        await createDepartment(payload);
+        await createPracticeArea(payload);
       }
 
 
       resetForm();
-      loadDepartments();
+      loadPracticeAreas();
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to save department");
+      setError(err.response?.data?.detail || "Failed to save practice area");
     }
   };
 
 
-  const handleEdit = (department) => {
-    setEditingId(department.id);
+  const handleEdit = (practiceArea) => {
+    setEditingId(practiceArea.id);
 
 
     setForm({
-      name: department.name || "",
-      description: department.description || ""
+      name: practiceArea.name || "",
+      description: practiceArea.description || ""
     });
 
 
@@ -220,14 +220,14 @@ function Departments() {
       setError("");
 
 
-      await deleteDepartment(deleteId);
+      await deletePracticeArea(deleteId);
 
 
       setDeleteId(null);
-      loadDepartments();
+      loadPracticeAreas();
     } catch (err) {
       setDeleteId(null);
-      setError(err.response?.data?.detail || "Failed to delete department");
+      setError(err.response?.data?.detail || "Failed to delete practice area");
     }
   };
 
@@ -236,8 +236,8 @@ function Departments() {
     <Layout search={search} setSearch={setSearch} onSearch={handleSearch}>
       <div className="page-header">
         <span>ADMINISTRATION</span>
-        <h1>Departments</h1>
-        <p>Manage internal departments used by system users.</p>
+        <h1>Practice Areas</h1>
+        <p>Manage legal practice areas used by cases.</p>
       </div>
 
 
@@ -245,13 +245,13 @@ function Departments() {
 
 
       <div className="dashboard-panel">
-        <h2>{editingId ? "Update Department" : "Create Department"}</h2>
+        <h2>{editingId ? "Update Practice Area" : "Create Practice Area"}</h2>
 
 
         <form className="module-form" onSubmit={handleSubmit}>
           <input
             name="name"
-            placeholder="Department name"
+            placeholder="Practice area name"
             value={form.name}
             onChange={handleChange}
             required
@@ -267,7 +267,7 @@ function Departments() {
 
 
           <button type="submit">
-            {editingId ? "Update Department" : "Create Department"}
+            {editingId ? "Update Practice Area" : "Create Practice Area"}
           </button>
 
 
@@ -280,8 +280,8 @@ function Departments() {
       </div>
 
 
-      <div className="dashboard-panel departments-table-panel">
-        <h2>Department List ({departments.length})</h2>
+      <div className="dashboard-panel practice-areas-table-panel">
+        <h2>Practice Area List ({practiceAreas.length})</h2>
 
 
         <table className="data-table">
@@ -296,15 +296,15 @@ function Departments() {
 
 
           <tbody>
-            {paginatedDepartments.map((department) => (
-              <tr key={department.id}>
-                <td>{department.id}</td>
-                <td>{department.name}</td>
-                <td>{department.description || "-"}</td>
+            {paginatedPracticeAreas.map((practiceArea) => (
+              <tr key={practiceArea.id}>
+                <td>{practiceArea.id}</td>
+                <td>{practiceArea.name}</td>
+                <td>{practiceArea.description || "-"}</td>
                 <td>
                   <button
                     className="table-btn"
-                    onClick={() => handleEdit(department)}
+                    onClick={() => handleEdit(practiceArea)}
                   >
                     Edit
                   </button>
@@ -312,7 +312,7 @@ function Departments() {
 
                   <button
                     className="table-btn danger"
-                    onClick={() => setDeleteId(department.id)}
+                    onClick={() => setDeleteId(practiceArea.id)}
                   >
                     Delete
                   </button>
@@ -321,21 +321,21 @@ function Departments() {
             ))}
 
 
-            {paginatedDepartments.length === 0 && (
+            {paginatedPracticeAreas.length === 0 && (
               <tr>
-                <td colSpan="4">No departments found.</td>
+                <td colSpan="4">No practice areas found.</td>
               </tr>
             )}
           </tbody>
         </table>
 
 
-        {departments.length > 0 && (
+        {practiceAreas.length > 0 && (
           <div className="pagination">
             <span>
               Showing {startIndex + 1} -{" "}
-              {Math.min(endIndex, departments.length)} of{" "}
-              {departments.length} departments
+              {Math.min(endIndex, practiceAreas.length)} of{" "}
+              {practiceAreas.length} practice areas
             </span>
 
 
@@ -370,10 +370,10 @@ function Departments() {
       {deleteId && (
         <div className="modal-overlay">
           <div className="confirm-modal">
-            <h2>Delete Department</h2>
+            <h2>Delete Practice Area</h2>
 
 
-            <p>Are you sure you want to permanently delete this department?</p>
+            <p>Are you sure you want to permanently delete this practice area?</p>
 
 
             <div className="modal-actions">
@@ -397,5 +397,5 @@ function Departments() {
 }
 
 
-export default Departments;
+export default PracticeAreas;
 

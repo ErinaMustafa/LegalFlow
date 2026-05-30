@@ -1,7 +1,13 @@
 from typing import Optional
 
 
+
+
 from pydantic import BaseModel
+
+
+
+
 
 
 
@@ -13,7 +19,11 @@ class CreateUserSchema(BaseModel):
     role_id: int
 
 
+
+
    
+
+
 
 
 class ResetPasswordSchema(BaseModel):
@@ -21,3 +31,14 @@ class ResetPasswordSchema(BaseModel):
    
     email: Optional[str] = None
     new_password: str
+
+
+
+
+class UpdateUserSchema(BaseModel):
+    username: str
+    email: str
+    role_id: int
+    department_id: Optional[int] = None
+    password: Optional[str] = None
+
