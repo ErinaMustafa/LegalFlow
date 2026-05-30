@@ -158,8 +158,11 @@ def get_case_notes(
         response.append({
             "id": case_note.id,
             "note": case_note.note,
-            "created_at": case_note.created_at.isoformat() if case_note.created_at else None,
-            "case_id": case_note.case_id
+            "created_at": (
+                case_note.created_at.isoformat()
+                if hasattr(case_note.created_at, "isoformat")
+                else case_note.created_at
+),            "case_id": case_note.case_id
         })
 
 
