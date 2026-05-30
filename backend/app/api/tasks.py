@@ -4,10 +4,10 @@ from sqlalchemy import case
 from datetime import datetime, timedelta
 from typing import Optional
 from app.core.security import require_roles
-
 from app.db.database import SessionLocal
 from app.models.task import Task
 from app.schemas.task_schema import TaskCreate, TaskResponse
+from app.models.notification import Notification
 
 
 from app.services.cache_service import (
@@ -201,16 +201,28 @@ def create_task(
         case_id=task.case_id
     )
 
-
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
 
+    new_notification = Notification(
+        title="New Task Created",
+        message=f"Task '{new_task.title}' was created.",
+        status="Unread",
+        user_id=current_user["user_id"],
+        task_id=new_task.id,
+        case_id=new_task.case_id
+    )
+
+    db.add(new_notification)
+    db.commit()
 
     delete_cache_by_pattern("tasks:*")
-
+    delete_cache_by_pattern("notifications:*")
 
     return new_task
+
+
 
 
 
