@@ -572,3 +572,144 @@
   color: #6b7280;
 }
 
+.notification-wrapper {
+  position: relative;
+  margin-left: auto;
+}
+
+.notification-bell {
+  position: relative;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #dc2626;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 999px;
+}
+
+.notification-dropdown {
+  position: absolute;
+  right: 0;
+  top: 42px;
+  width: 320px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+  z-index: 1000;
+}
+
+.notification-dropdown h4 {
+  margin: 0 0 12px;
+}
+
+.notification-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item p {
+  margin: 4px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.notification-item small {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.navbar {
+  position: relative;
+  z-index: 2000;
+}
+
+.notification-wrapper {
+  position: relative;
+  margin-left: auto;
+  z-index: 3000;
+}
+
+.notification-bell {
+  position: relative;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 3001;
+}
+
+.notification-dropdown {
+  position: absolute;
+  right: 0;
+  top: 42px;
+  width: 360px;
+  max-height: 520px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+  z-index: 9999;
+}
+
+.notification-item {
+  width: 100%;
+  display: block;
+  text-align: left;
+  border: none;
+  background: white;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: #f8fafc;
+}
+
+.notification-item strong {
+  display: block;
+  color: #111827;
+  font-size: 15px;
+}
+
+.notification-item p {
+  margin: 5px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.notification-item small {
+  color: #2563eb;
+  font-weight: 800;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  background: #dc2626;
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+

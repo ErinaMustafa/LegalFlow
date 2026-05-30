@@ -12,3 +12,7 @@
 [2026-05-25 16:43:50.278354] Important notification email sent | To: curiousmind.es@gmail.com
 [2026-05-25 16:45:09.839104] Email sent successfully | To: curiousmind.es@gmail.com | Subject: LegalFlow Contract Expiration Warning
 [2026-05-25 16:45:57.756732] Email sent successfully | To: curiousmind.es@gmail.com | Subject: LegalFlow Court Decision Update
+[2026-05-30 08:38:31.467191] Reminder processed | ID: 12 | Title: reminder | Message: hi | User ID: 1
+[2026-05-30 08:38:31.680773] Reminder processed | ID: 13 | Title: reminder | Message: hi | User ID: 1
+[2026-05-30 08:38:32.408595] Reminder processed | ID: 14 | Title: reminder | Message: hi | User ID: 1
+[2026-05-30 08:57:33.299747] Notification processed | ID: 15 | Title: hello | Message: hi | User ID: 1
