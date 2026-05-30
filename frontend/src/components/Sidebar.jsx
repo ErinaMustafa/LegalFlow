@@ -5,8 +5,16 @@ import { Link } from "react-router-dom";
 
 
 
+
+
+
+
 function Sidebar() {
   const { user, logout } = useAuth();
+
+
+
+
 
 
 
@@ -19,11 +27,20 @@ function Sidebar() {
 
 
 
+
+
+
+
       { type: "group", label: "Administration" },
-      { label: "Create User", path: "/admin/create-user" },
-      { label: "Reset Password", path: "/admin/reset-password" },
+      { label: "Users", path: "/users" },
+      { label: "Create User", path: "/create-user" },
+      { label: "Reset Password", path: "/reset-password" },
       { label: "Roles", path: "/roles" },
       { label: "Departments", path: "/departments" },
+
+
+
+
 
 
 
@@ -41,6 +58,8 @@ function Sidebar() {
       { label: "Calendar Events", path: "/calendar" },
 
 
+
+
       { type: "group", label: "Operations" },
       { label: "Clients", path: "/clients" },
       { label: "Tasks", path: "/tasks" },
@@ -48,6 +67,10 @@ function Sidebar() {
       { label: "Reminders", path: "/reminders" },
       { label: "Notifications", path: "/notifications" },
       { label: "Comments", path: "/comments" },
+
+
+
+
 
 
 
@@ -61,10 +84,18 @@ function Sidebar() {
 
 
 
+
+
+
+
       { type: "group", label: "AI & Audit" },
       { label: "AI Analyses", path: "/ai" },
       { label: "Audit Logs", path: "/audit-logs" },
     ],
+
+
+
+
 
 
 
@@ -80,6 +111,10 @@ function Sidebar() {
       { label: "Witnesses", path: "/witnesses" },
       { label: "AI Analyses", path: "/ai" },
     ],
+
+
+
+
 
 
 
@@ -100,6 +135,10 @@ function Sidebar() {
 
 
 
+
+
+
+
     Manager: [
       { label: "Dashboard", path: "/dashboard" },
       { label: "Clients", path: "/clients" },
@@ -116,6 +155,10 @@ function Sidebar() {
 
 
 
+
+
+
+
     Finance: [
       { label: "Dashboard", path: "/dashboard" },
       { label: "Invoices", path: "/invoices" },
@@ -128,9 +171,17 @@ function Sidebar() {
 
 
 
+
+
+
+
   const menuItems = menuByRole[user?.role] || [
     { label: "Dashboard", path: "/dashboard" },
   ];
+
+
+
+
 
 
 
@@ -140,8 +191,16 @@ function Sidebar() {
 
 
 
+
+
+
+
   useEffect(() => {
     const savedScroll = sessionStorage.getItem("sidebarScroll");
+
+
+
+
 
 
 
@@ -154,6 +213,10 @@ function Sidebar() {
 
 
 
+
+
+
+
   const handleSidebarScroll = () => {
     if (sidebarRef.current) {
       sessionStorage.setItem(
@@ -162,6 +225,10 @@ function Sidebar() {
       );
     }
   };
+
+
+
+
 
 
 
@@ -179,11 +246,19 @@ function Sidebar() {
 
 
 
+
+
+
+
           <div>
             <h2>LegalFlow</h2>
             <p>{user?.username || "User"}</p>
           </div>
         </div>
+
+
+
+
 
 
 
@@ -204,6 +279,10 @@ function Sidebar() {
 
 
 
+
+
+
+
             return (
               <Link key={item.path} to={item.path}>
                 {item.label}
@@ -216,6 +295,10 @@ function Sidebar() {
 
 
 
+
+
+
+
       <div className="sidebar-user">
         <div className="avatar">
           {user?.username?.charAt(0)?.toUpperCase() || "U"}
@@ -224,10 +307,18 @@ function Sidebar() {
 
 
 
+
+
+
+
         <div>
           <strong>{user?.username}</strong>
           <p>{user?.role}</p>
         </div>
+
+
+
+
 
 
 
@@ -241,7 +332,19 @@ function Sidebar() {
 
 
 
+
+
+
+
 export default Sidebar;
+
+
+
+
+
+
+
+
 
 
 
