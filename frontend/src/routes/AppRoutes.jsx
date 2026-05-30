@@ -8,6 +8,10 @@ import CalendarEvents from "../pages/operations/CalendarEvents";
 import Reminders from "../pages/operations/Reminders";
 import Comments from "../pages/operations/Comments";
 import Notifications from "../pages/operations/Notifications";
+import Invoices from "../pages/finance/Invoices";
+import Payments from "../pages/finance/Payments";
+import Expenses from "../pages/finance/Expenses";
+import TimeEntries from "../pages/finance/TimeEntries";
 
 
 
@@ -268,10 +272,40 @@ function AppRoutes() {
 
 
 
-        <Route path="/invoices" element={<ProtectedRoute allowedRoles={["Admin", "Finance", "Manager"]}><PlaceholderPage title="Invoices" /></ProtectedRoute>} />
-        <Route path="/payments" element={<ProtectedRoute allowedRoles={["Admin", "Finance", "Manager"]}><PlaceholderPage title="Payments" /></ProtectedRoute>} />
-        <Route path="/expenses" element={<ProtectedRoute allowedRoles={["Admin", "Finance", "Manager"]}><PlaceholderPage title="Expenses" /></ProtectedRoute>} />
-        <Route path="/time-entries" element={<ProtectedRoute allowedRoles={["Admin", "Finance", "Manager", "Lawyer"]}><PlaceholderPage title="Time Entries" /></ProtectedRoute>} />
+<Route
+  path="/invoices"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Finance", "Manager"]}>
+      <Invoices />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/payments"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Finance"]}>
+      <Payments />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/expenses"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Finance"]}>
+      <Expenses />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/time-entries"
+  element={
+    <ProtectedRoute
+      allowedRoles={["Admin", "Lawyer", "Manager", "Finance"]}
+    >
+      <TimeEntries />
+    </ProtectedRoute>
+  }
+/>
 
 
 
