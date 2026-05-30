@@ -189,16 +189,6 @@ frontend/
 * Audit Logs
 
 
-# Installation
-
-## Clone Repository
-
-
-git clone https://github.com/your-repository/LegalFlow.git
-
-cd LegalFlow
-
-
 ## Backend Setup
 
 
