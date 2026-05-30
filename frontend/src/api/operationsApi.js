@@ -122,3 +122,70 @@ export const deleteAppointment = async (appointmentId) => {
   return response.data;
 };
 
+export const getReminders = async (params = {}) => {
+  const response = await axiosClient.get("/reminders/", { params });
+  return response.data;
+};
+
+export const createReminder = async (reminderData) => {
+  const response = await axiosClient.post("/reminders/", reminderData);
+  return response.data;
+};
+
+export const updateReminder = async (reminderId, reminderData) => {
+  const response = await axiosClient.put(`/reminders/${reminderId}`, reminderData);
+  return response.data;
+};
+
+export const deleteReminder = async (reminderId) => {
+  const response = await axiosClient.delete(`/reminders/${reminderId}`);
+  return response.data;
+};
+
+
+export const getComments = async () => {
+  const response = await axiosClient.get("/comments/");
+  return response.data;
+};
+
+export const createComment = async (commentData) => {
+  const response = await axiosClient.post("/comments/", commentData);
+  return response.data;
+};
+
+export const updateComment = async (commentId, commentData) => {
+  const response = await axiosClient.put(`/comments/${commentId}`, commentData);
+  return response.data;
+};
+
+export const deleteComment = async (commentId) => {
+  const response = await axiosClient.delete(`/comments/${commentId}`);
+  return response.data;
+};
+
+
+
+
+export const createNotification = async (notificationData) => {
+  const response = await axiosClient.post("/notifications/", notificationData);
+  return response.data;
+};
+
+export const getNotifications = async (params = {}) => {
+  const response = await axiosClient.get("/notifications/", { params });
+  return response.data;
+};
+
+export const updateNotification = async (notificationId, notificationData) => {
+  const response = await axiosClient.put(
+    `/notifications/${notificationId}`,
+    notificationData
+  );
+  return response.data;
+};
+
+export const deleteNotification = async (notificationId) => {
+  const response = await axiosClient.delete(`/notifications/${notificationId}`);
+  return response.data;
+};
+
