@@ -5,6 +5,9 @@ import Tasks from "../pages/operations/Tasks";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Layout from "../components/Layout";
 import CalendarEvents from "../pages/operations/CalendarEvents";
+import Reminders from "../pages/operations/Reminders";
+import Comments from "../pages/operations/Comments";
+import Notifications from "../pages/operations/Notifications";
 
 
 
@@ -233,9 +236,30 @@ function AppRoutes() {
     </ProtectedRoute>
   }
 />
-        <Route path="/reminders" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager"]}><PlaceholderPage title="Reminders" /></ProtectedRoute>} />
-        <Route path="/notifications" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager"]}><PlaceholderPage title="Notifications" /></ProtectedRoute>} />
-        <Route path="/comments" element={<ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager", "Lawyer"]}><PlaceholderPage title="Comments" /></ProtectedRoute>} />
+<Route
+  path="/reminders"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}>
+      <Reminders />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/notifications"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Lawyer", "Assistant", "Manager"]}>
+      <Notifications />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/comments"
+  element={
+    <ProtectedRoute allowedRoles={["Admin", "Assistant", "Manager", "Lawyer"]}>
+      <Comments />
+    </ProtectedRoute>
+  }
+/>
 
 
 
