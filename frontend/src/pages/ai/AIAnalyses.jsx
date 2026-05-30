@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+
+
 import { useEffect, useMemo, useState } from "react";
 import Layout from "../../components/Layout";
 import {
@@ -7,15 +10,21 @@ import {
   deleteAIAnalysis
 } from "../../api/aiApi";
 
+
 function AIAnalyses() {
   const [analyses, setAnalyses] = useState([]);
 
-  const [form, setForm] = useState({
+
+  const [chatForm, setChatForm] = useState({
     prompt: "",
     analysis_type: "text_analysis",
     case_id: "",
     document_id: ""
   });
+
+
+  const [latestAnswer, setLatestAnswer] = useState("");
+
 
   const [editForm, setEditForm] = useState({
     prompt: "",
@@ -27,16 +36,20 @@ function AIAnalyses() {
     document_id: ""
   });
 
+
   const [editingId, setEditingId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
+
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [search, setSearch] = useState("");
 
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
+
 
   const loadAnalyses = async () => {
     try {
@@ -48,18 +61,18 @@ function AIAnalyses() {
     }
   };
 
+
   useEffect(() => {
     loadAnalyses();
   }, []);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search]);
 
   const filteredAnalyses = useMemo(() => {
     const value = search.trim().toLowerCase();
 
+
     if (!value) return analyses;
+
 
     return analyses.filter((item) => {
       return (
@@ -74,31 +87,26 @@ function AIAnalyses() {
     });
   }, [analyses, search]);
 
+
   const totalPages = Math.ceil(filteredAnalyses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedAnalyses = filteredAnalyses.slice(startIndex, endIndex);
 
+
   const handleSearch = (e) => {
     e.preventDefault();
-
-    const pageContent = document.querySelector(".page-content");
-    const tablePanel = document.querySelector(".ai-table-panel");
-
-    if (pageContent && tablePanel) {
-      pageContent.scrollTo({
-        top: tablePanel.offsetTop - 20,
-        behavior: "smooth"
-      });
-    }
+    setCurrentPage(1);
   };
 
-  const handleChange = (e) => {
-    setForm({
-      ...form,
+
+  const handleChatChange = (e) => {
+    setChatForm({
+      ...chatForm,
       [e.target.name]: e.target.value
     });
   };
+
 
   const handleEditChange = (e) => {
     setEditForm({
@@ -107,8 +115,9 @@ function AIAnalyses() {
     });
   };
 
-  const resetForm = () => {
-    setForm({
+
+  const resetChatForm = () => {
+    setChatForm({
       prompt: "",
       analysis_type: "text_analysis",
       case_id: "",
@@ -116,8 +125,10 @@ function AIAnalyses() {
     });
   };
 
+
   const resetEditForm = () => {
     setEditingId(null);
+
 
     setEditForm({
       prompt: "",
@@ -130,36 +141,46 @@ function AIAnalyses() {
     });
   };
 
-  const handleAnalyze = async (e) => {
+
+  const handleAskAI = async (e) => {
     e.preventDefault();
 
+
     const payload = {
-      prompt: form.prompt,
-      analysis_type: form.analysis_type || "text_analysis",
-      case_id: form.case_id ? Number(form.case_id) : null,
-      document_id: form.document_id ? Number(form.document_id) : null
+      prompt: chatForm.prompt,
+      analysis_type: chatForm.analysis_type || "text_analysis",
+      case_id: chatForm.case_id ? Number(chatForm.case_id) : null,
+      document_id: chatForm.document_id ? Number(chatForm.document_id) : null
     };
+
 
     try {
       setError("");
       setSuccess("");
       setLoading(true);
+      setLatestAnswer("");
 
-      await analyzeText(payload);
 
-      setSuccess("AI analysis created successfully");
+      const data = await analyzeText(payload);
 
-      resetForm();
+
+      setLatestAnswer(data.result || "");
+      setSuccess("AI response saved to analysis list");
+
+
+      resetChatForm();
       loadAnalyses();
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to analyze text");
+      setError(err.response?.data?.detail || "Failed to get AI response");
     } finally {
       setLoading(false);
     }
   };
 
+
   const handleEdit = (analysis) => {
     setEditingId(analysis.id);
+
 
     setEditForm({
       prompt: analysis.prompt || "",
@@ -171,7 +192,9 @@ function AIAnalyses() {
       document_id: analysis.document_id || ""
     });
 
+
     const pageContent = document.querySelector(".page-content");
+
 
     if (pageContent) {
       pageContent.scrollTo({
@@ -181,8 +204,10 @@ function AIAnalyses() {
     }
   };
 
+
   const handleUpdate = async (e) => {
     e.preventDefault();
+
 
     const payload = {
       prompt: editForm.prompt,
@@ -194,13 +219,17 @@ function AIAnalyses() {
       document_id: editForm.document_id ? Number(editForm.document_id) : null
     };
 
+
     try {
       setError("");
       setSuccess("");
 
+
       await updateAIAnalysis(editingId, payload);
 
+
       setSuccess("AI analysis updated successfully");
+
 
       resetEditForm();
       loadAnalyses();
@@ -209,12 +238,15 @@ function AIAnalyses() {
     }
   };
 
+
   const confirmDelete = async () => {
     try {
       setError("");
       setSuccess("");
 
+
       await deleteAIAnalysis(deleteId);
+
 
       setDeleteId(null);
       setSuccess("AI analysis deleted successfully");
@@ -225,81 +257,107 @@ function AIAnalyses() {
     }
   };
 
+
   return (
     <Layout search={search} setSearch={setSearch} onSearch={handleSearch}>
       <div className="page-header">
         <span>AI</span>
-        <h1>AI Analyses</h1>
-        <p>Create, review, update, and delete AI legal analyses.</p>
+        <h1>Legal AI Assistant</h1>
+        <p>Ask legal questions and keep saved AI analysis history below.</p>
       </div>
+
 
       {error && <div className="error-box">{error}</div>}
 
+
       {success && <div className="success-box">{success}</div>}
+
 
       {!editingId && (
         <div className="dashboard-panel">
-          <h2>Create AI Analysis</h2>
+          <h2>Legal AI Chatbot</h2>
 
-          <form className="module-form" onSubmit={handleAnalyze}>
-            <input
+
+          <form className="module-form" onSubmit={handleAskAI}>
+            <textarea
               name="prompt"
-              placeholder="Prompt"
-              value={form.prompt}
-              onChange={handleChange}
+              placeholder="Ask AI something about a case, contract, document, evidence, or legal text..."
+              value={chatForm.prompt}
+              onChange={handleChatChange}
               required
+              rows="5"
             />
+
 
             <input
               name="analysis_type"
               placeholder="Analysis type"
-              value={form.analysis_type}
-              onChange={handleChange}
+              value={chatForm.analysis_type}
+              onChange={handleChatChange}
             />
+
 
             <input
               name="case_id"
               type="number"
               placeholder="Case ID optional"
-              value={form.case_id}
-              onChange={handleChange}
+              value={chatForm.case_id}
+              onChange={handleChatChange}
             />
+
 
             <input
               name="document_id"
               type="number"
               placeholder="Document ID optional"
-              value={form.document_id}
-              onChange={handleChange}
+              value={chatForm.document_id}
+              onChange={handleChatChange}
             />
 
+
             <button type="submit" disabled={loading}>
-              {loading ? "Analyzing..." : "Analyze Text"}
+              {loading ? "AI is thinking..." : "Ask AI"}
             </button>
           </form>
+
+
+          {latestAnswer && (
+            <div className="dashboard-panel" style={{ marginTop: "18px" }}>
+              <h2>AI Answer</h2>
+              <div className="ai-answer-box">
+              {latestAnswer}
+              </div>
+            </div>
+          )}
         </div>
       )}
+
 
       {editingId && (
         <div className="dashboard-panel">
           <h2>Update AI Analysis</h2>
 
+
           <form className="module-form" onSubmit={handleUpdate}>
-            <input
+            <textarea
               name="prompt"
               placeholder="Prompt"
               value={editForm.prompt}
               onChange={handleEditChange}
               required
+              rows="4"
             />
 
-            <input
+
+            <textarea
               name="result"
               placeholder="Result"
               value={editForm.result}
               onChange={handleEditChange}
               required
+              rows="5"
             />
+
 
             <input
               name="analysis_type"
@@ -308,12 +366,14 @@ function AIAnalyses() {
               onChange={handleEditChange}
             />
 
+
             <input
               name="created_at"
               type="datetime-local"
               value={editForm.created_at}
               onChange={handleEditChange}
             />
+
 
             <input
               name="user_id"
@@ -324,6 +384,7 @@ function AIAnalyses() {
               required
             />
 
+
             <input
               name="case_id"
               type="number"
@@ -331,6 +392,7 @@ function AIAnalyses() {
               value={editForm.case_id}
               onChange={handleEditChange}
             />
+
 
             <input
               name="document_id"
@@ -340,7 +402,9 @@ function AIAnalyses() {
               onChange={handleEditChange}
             />
 
+
             <button type="submit">Update Analysis</button>
+
 
             <button
               type="button"
@@ -353,8 +417,10 @@ function AIAnalyses() {
         </div>
       )}
 
+
       <div className="dashboard-panel ai-table-panel">
-        <h2>AI Analysis List ({filteredAnalyses.length})</h2>
+        <h2>Saved AI Analysis List ({filteredAnalyses.length})</h2>
+
 
         <table className="data-table">
           <thead>
@@ -371,12 +437,24 @@ function AIAnalyses() {
             </tr>
           </thead>
 
+
           <tbody>
             {paginatedAnalyses.map((analysis) => (
               <tr key={analysis.id}>
                 <td>{analysis.id}</td>
                 <td>{analysis.prompt}</td>
-                <td>{analysis.result}</td>
+              <td>
+          <div className="result-preview-wrapper">
+           <div className="result-preview">
+      {analysis.result}
+    </div>
+
+
+    <div className="result-tooltip">
+      {analysis.result}
+    </div>
+  </div>
+</td>
                 <td>{analysis.analysis_type || "-"}</td>
                 <td>{analysis.user_id}</td>
                 <td>{analysis.case_id || "-"}</td>
@@ -394,6 +472,7 @@ function AIAnalyses() {
                     Edit
                   </button>
 
+
                   <button
                     className="table-btn danger"
                     onClick={() => setDeleteId(analysis.id)}
@@ -404,6 +483,7 @@ function AIAnalyses() {
               </tr>
             ))}
 
+
             {paginatedAnalyses.length === 0 && (
               <tr>
                 <td colSpan="9">No AI analyses found.</td>
@@ -412,6 +492,7 @@ function AIAnalyses() {
           </tbody>
         </table>
 
+
         {filteredAnalyses.length > 0 && (
           <div className="pagination">
             <span>
@@ -419,6 +500,7 @@ function AIAnalyses() {
               {Math.min(endIndex, filteredAnalyses.length)} of{" "}
               {filteredAnalyses.length} analyses
             </span>
+
 
             <div className="pagination-buttons">
               <button
@@ -429,9 +511,11 @@ function AIAnalyses() {
                 Previous
               </button>
 
+
               <span>
                 Page {currentPage} of {totalPages}
               </span>
+
 
               <button
                 type="button"
@@ -445,12 +529,15 @@ function AIAnalyses() {
         )}
       </div>
 
+
       {deleteId && (
         <div className="modal-overlay">
           <div className="confirm-modal">
             <h2>Delete AI Analysis</h2>
 
+
             <p>Are you sure you want to permanently delete this AI analysis?</p>
+
 
             <div className="modal-actions">
               <button
@@ -459,6 +546,7 @@ function AIAnalyses() {
               >
                 Cancel
               </button>
+
 
               <button className="danger-btn" onClick={confirmDelete}>
                 Delete
@@ -471,4 +559,12 @@ function AIAnalyses() {
   );
 }
 
+
 export default AIAnalyses;
+
+
+
+
+
+
+
